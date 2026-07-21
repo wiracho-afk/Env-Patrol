@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Env Patrol System & Admin Panel</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 pb-16">
+
+    <!-- Navigation Header -->
+    <nav class="bg-emerald-800 text-white shadow-lg sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-leaf text-emerald-400 text-2xl"></i>
+                    <span class="font-bold text-xl tracking-wide">ENV PATROL SYSTEM</span>
+                </div>
+                <div class="flex space-x-2 text-sm font-medium">
+                    <button onclick="switchTab('user')" id="btnTabUser" class="bg-emerald-700 px-4 py-2 rounded-lg hover:bg-emerald-600 transition flex items-center">
+                        <i class="fa-solid fa-desktop mr-2"></i> หน้าใช้งานทั่วไป / Patrol
+                    </button>
+                    <button onclick="switchTab('admin')" id="btnTabAdmin" class="bg-slate-700 px-4 py-2 rounded-lg hover:bg-slate-600 transition flex items-center">
+                        <i class="fa-solid fa-lock mr-2"></i> ระบบจัดการหลังบ้าน (Admin)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- ==================== USER VIEW ==================== -->
+        <div id="userView" class="space-y-10">
+
+            <!-- USER NAVIGATION TABS -->
+            <div class="flex border-b border-slate-300 space-x-4 no-print">
+                <button onclick="switchUserSubTab('dashboard')" id="userSubTabDashboard" class="pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center">
+                    <i class="fa-solid fa-chart-line mr-2"></i> Dashboard ภาพรวม
+                </button>
+                <button onclick="switchUserSubTab('form')" id="userSubTabForm" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center">
+                    <i class="fa-solid fa-pen-to-square mr-2"></i> แบบฟอร์มแจ้งพบปัญหา
+                </button>
+                <button onclick="switchUserSubTab('report')" id="userSubTabReport" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center">
+                    <i class="fa-solid fa-file-invoice mr-2"></i> ระบบออกรายงาน (Reports)
+                </button>
+            </div>
+
+            <!-- SECTION 1: DASHBOARD OVERVIEW -->
+            <div id="userPanelDashboard" class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-slate-800 flex items-center">
+                        <i class="fa-solid fa-chart-line text-emerald-600 mr-2"></i> ภาพรวมระบบสิ่งแวดล้อม (Dashboard)
+                    </h2>
+                    <span class="text-xs bg-slate-200 text-slate-600 px-3 py-1 rounded-full font-medium">ข้อมูลอัปเดตระบบ Real-time</span>
+                </div>
+
+                <!-- Stat Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase">รายการทั้งหมด</p>
+                            <p class="text-3xl font-bold text-slate-700 mt-1" id="statTotal">115</p>
+                        </div>
+                        <div class="p-3 bg-blue-100 text-blue-600 rounded-lg"><i class="fa-solid fa-clipboard-list text-2xl"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase">แก้ไขแล้ว (Resolved)</p>
+                            <p class="text-3xl font-bold text-emerald-600 mt-1" id="statResolved">98</p>
+                        </div>
+                        <div class="p-3 bg-emerald-100 text-emerald-600 rounded-lg"><i class="fa-solid fa-circle-check text-2xl"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase">ยังไม่แก้ไข (Pending)</p>
+                            <p class="text-3xl font-bold text-amber-500 mt-1" id="statPending">17</p>
+                        </div>
+                        <div class="p-3 bg-amber-100 text-amber-600 rounded-lg"><i class="fa-solid fa-clock-rotate-left text-2xl"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase">อัตราการแก้ไขสำเร็จ</p>
+                            <p class="text-3xl font-bold text-indigo-600 mt-1" id="statRate">85.2%</p>
+                        </div>
+                        <div class="p-3 bg-indigo-100 text-indigo-600 rounded-lg"><i class="fa-solid fa-shield-halved text-2xl"></i></div>
+                    </div>
+                </div>
+
+                <!-- 4 Bar Charts Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                        <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center">
+                            <i class="fa-solid fa-chart-column text-emerald-600 mr-2"></i> 1. สรุปรายการ แยกตามรายเดือน (แก้ไขแล้ว vs ยังไม่แก้ไข)
+                        </h3>
+                        <div class="relative h-64"><canvas id="chart1Monthly"></canvas></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                        <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center">
+                            <i class="fa-solid fa-building-user text-indigo-600 mr-2"></i> 2. สรุปรายการ แยกตามแผนกที่รับผิดชอบ
+                        </h3>
+                        <div class="relative h-64"><canvas id="chart2Department"></canvas></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                        <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center">
+                            <i class="fa-solid fa-layer-group text-blue-600 mr-2"></i> 3. สรุปรายการ แยกตามหมวดหมู่สิ่งแวดล้อม
+                        </h3>
+                        <div class="relative h-64"><canvas id="chart3Category"></canvas></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                        <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center">
+                            <i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i> 4. สรุปรายการ แยกตามระดับความรุนแรง
+                        </h3>
+                        <div class="relative h-64"><canvas id="chart4Severity"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: DIGITAL CHECKLIST / PATROL FORM -->
+            <div id="userPanelForm" class="hidden bg-white p-6 md:p-8 rounded-xl shadow-md border border-slate-200 space-y-6">
+                <div class="border-b pb-4 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                            <i class="fa-solid fa-pen-to-square text-emerald-600 mr-2"></i> แบบฟอร์มแจ้งพบปัญหาสิ่งแวดล้อม (Env Patrol Form)
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">กรอกข้อมูลและแนบรูปถ่าย 2 รูป เพื่อส่งลิงก์แจ้งเตือนให้ผู้รับผิดชอบแก้ไขทาง LINE</p>
+                    </div>
+                </div>
+
+                <form id="patrolForm" onsubmit="submitPatrolForm(event)" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">พื้นที่พบปัญหา <span class="text-red-500">*</span></label>
+                            <input type="text" id="location" required placeholder="เช่น อาคาร B ชั้น 1, จุดจัดเก็บขยะ" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">แผนกที่รับผิดชอบ <span class="text-red-500">*</span></label>
+                            <select id="departmentSelect" onchange="updatePersonInCharge()" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">ผู้รับผิดชอบ (Person in Charge) & LINE ID</label>
+                            <input type="text" id="picDisplay" readonly class="w-full px-4 py-2 border rounded-lg bg-slate-100 text-slate-600 text-sm font-medium outline-none" value="กรุณาเลือกแผนก">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">หมวดหมู่สิ่งแวดล้อม <span class="text-red-500">*</span></label>
+                            <select id="categorySelect" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">ระดับความรุนแรง <span class="text-red-500">*</span></label>
+                            <select id="severity" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
+                                <option value="Low">Low - เล็กน้อย (แก้ไขภายใน 7 วัน)</option>
+                                <option value="Medium" selected>Medium - ปานกลาง (แก้ไขภายใน 3 วัน)</option>
+                                <option value="High">High - สูง (แก้ไขภายใน 24 ชม.)</option>
+                                <option value="Critical">Critical - รุนแรงมาก (หยุดงาน/แก้ไขทันที)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">รายละเอียดสิ่งที่พบความผิดปกติ <span class="text-red-500">*</span></label>
+                        <textarea id="description" rows="3" required placeholder="อธิบายสภาพปัญหา ข้อพิจารณา หรือข้อเสนอแนะ..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">แนบรูปถ่ายปัญหา (สูงสุด 2 รูป)</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('pImg1').click()">
+                                <input type="file" id="pImg1" accept="image/*" class="hidden" onchange="previewImg(this, 'prev1', 'place1')">
+                                <div id="place1">
+                                    <i class="fa-solid fa-camera text-2xl text-emerald-600 mb-1"></i>
+                                    <p class="text-xs font-semibold text-slate-700">รูปที่ 1: มุมกว้าง / สภาพแวดล้อมโดยรวม</p>
+                                </div>
+                                <img id="prev1" class="hidden w-full h-32 object-cover rounded-lg shadow-sm">
+                            </div>
+                            <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('pImg2').click()">
+                                <input type="file" id="pImg2" accept="image/*" class="hidden" onchange="previewImg(this, 'prev2', 'place2')">
+                                <div id="place2">
+                                    <i class="fa-solid fa-magnifying-glass-plus text-2xl text-emerald-600 mb-1"></i>
+                                    <p class="text-xs font-semibold text-slate-700">รูปที่ 2: มุมเจาะจง / จุดความผิดปกติ</p>
+                                </div>
+                                <img id="prev2" class="hidden w-full h-32 object-cover rounded-lg shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2.5 rounded-lg shadow-md transition flex items-center space-x-2">
+                            <i class="fa-brands fa-line text-xl"></i>
+                            <span>บันทึก & ส่งลิงก์แจ้งทาง LINE ผู้รับผิดชอบ</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- SECTION 3: REPORT GENERATOR (MOVED TO USER VIEW) -->
+            <div id="userPanelReport" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
+                <div class="flex justify-between items-center border-b pb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-lg flex items-center">
+                            <i class="fa-solid fa-file-export text-emerald-600 mr-2"></i> ระบบสร้างและออกรายงาน (Env Patrol Report Generator)
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">สามารถเลือกแผนก รายเดือน และสถานะ เพื่อสร้างรายงานสรุปและพิมพ์/ดาวน์โหลดได้ทันที</p>
+                    </div>
+                </div>
+
+                <!-- Report Filter Controls -->
+                <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4 no-print">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">1. เลือกแผนกที่ต้องการดูรายงาน</label>
+                            <select id="reportDeptSelect" class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">2. เลือกช่วงเดือน</label>
+                            <select id="reportMonthSelect" class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <option value="all">ทุกเดือน (All Months)</option>
+                                <option value="01">มกราคม</option>
+                                <option value="02">กุมภาพันธ์</option>
+                                <option value="03">มีนาคม</option>
+                                <option value="04">เมษายน</option>
+                                <option value="05">พฤษภาคม</option>
+                                <option value="06">มิถุนายน</option>
+                                <option value="07" selected>กรกฎาคม</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">3. เลือกสถานะหัวข้อ</label>
+                            <select id="reportStatusSelect" class="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <option value="all">หัวข้อทั้งหมด (All Status)</option>
+                                <option value="Resolved">หัวข้อที่แก้ไขแล้ว (Resolved)</option>
+                                <option value="Pending">หัวข้อยังไม่แก้ไข (Pending)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-2">
+                        <button onclick="generateLiveReport()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-5 py-2.5 rounded-lg transition shadow-sm flex items-center">
+                            <i class="fa-solid fa-magnifying-glass mr-1.5"></i> ประมวลผลและแสดงรายงาน
+                        </button>
+                        <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold px-5 py-2.5 rounded-lg transition shadow-sm flex items-center">
+                            <i class="fa-solid fa-print mr-1.5"></i> พิมพ์ / ดาวน์โหลด PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Generated Report Display Area -->
+                <div id="reportDisplayArea" class="border rounded-xl p-6 bg-white space-y-4">
+                    <div class="text-center border-b pb-4">
+                        <h2 class="text-xl font-bold text-slate-800">รายงานสรุปการตรวจตระเวนสิ่งแวดล้อม (Env Patrol Report)</h2>
+                        <p class="text-xs text-slate-500 mt-1" id="reportHeaderMeta">ข้อมูลประจำเดือน: ทุกเดือน | แผนก: ทุกแผนก | สถานะ: หัวข้อทั้งหมด</p>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 uppercase font-bold border-b">
+                                    <th class="p-2.5">รหัสเคส</th>
+                                    <th class="p-2.5">วันที่</th>
+                                    <th class="p-2.5">พื้นที่พบปัญหา</th>
+                                    <th class="p-2.5">แผนกรับผิดชอบ</th>
+                                    <th class="p-2.5">ผู้รับผิดชอบ</th>
+                                    <th class="p-2.5">หมวดหมู่</th>
+                                    <th class="p-2.5">ความรุนแรง</th>
+                                    <th class="p-2.5 text-center">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBody" class="divide-y divide-slate-200">
+                                <!-- Dynamic Rows Generated Here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ==================== ADMIN VIEW ==================== -->
+        <div id="adminView" class="hidden space-y-10">
+
+            <!-- Admin Header -->
+            <div class="bg-slate-800 text-white p-6 rounded-xl shadow-lg flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <i class="fa-solid fa-user-shield text-amber-400 mr-3"></i> ระบบผู้ดูแลระบบ (Admin Management Panel)
+                    </h2>
+                    <p class="text-xs text-slate-300 mt-1">จัดการแผนก/ผู้รับผิดชอบ, หมวดหมู่สิ่งแวดล้อม และอนุมัติงานแก้ไข</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="resetSystemData()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-sm flex items-center">
+                        <i class="fa-solid fa-rotate text-sm mr-1.5"></i> ล้างข้อมูลทั้งหมด (Reset System)
+                    </button>
+                    <span class="bg-amber-500/20 text-amber-300 text-xs px-3 py-1.5 rounded-full border border-amber-500/30 font-medium">Admin Mode Active</span>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB MENU -->
+            <div class="flex border-b border-slate-300 space-x-4">
+                <button onclick="switchAdminSubTab('review')" id="adminSubTabReview" class="pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center">
+                    <i class="fa-solid fa-list-check mr-2"></i> 1. ตรวจสอบงานแก้ไข (Approve Fixes)
+                </button>
+                <button onclick="switchAdminSubTab('dept')" id="adminSubTabDept" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center">
+                    <i class="fa-solid fa-building mr-2"></i> 2. แผนก & ผู้รับผิดชอบ & LINE
+                </button>
+                <button onclick="switchAdminSubTab('cat')" id="adminSubTabCat" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center">
+                    <i class="fa-solid fa-tags mr-2"></i> 3. หมวดหมู่สิ่งแวดล้อม
+                </button>
+            </div>
+
+            <!-- ADMIN SUBTAB 1: APPROVE FIXES -->
+            <div id="adminPanelReview" class="bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
+                <h3 class="font-bold text-slate-800 text-lg flex items-center">
+                    <i class="fa-solid fa-clipboard-check text-indigo-600 mr-2"></i> รายการที่ผู้รับผิดชอบส่งผลการแก้ไขเข้ามา (รอ Admin ตรวจสอบ)
+                </h3>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-semibold border-b">
+                                <th class="p-3">รหัสเคส</th>
+                                <th class="p-3">พื้นที่ / หมวดหมู่</th>
+                                <th class="p-3">ผู้รับผิดชอบ (LINE)</th>
+                                <th class="p-3">คำอธิบายการแก้ไข & รูปหลังแก้ไข (2 รูป)</th>
+                                <th class="p-3 text-center">การอนุมัติ (Admin Decision)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminReviewTableBody" class="divide-y divide-slate-200">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ADMIN SUBTAB 2: DEPARTMENT & LINE ID MANAGEMENT -->
+            <div id="adminPanelDept" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center">
+                        <i class="fa-solid fa-building-user text-emerald-600 mr-2"></i> จัดการแผนกที่รับผิดชอบ ผู้รับผิดชอบ และ LINE ID
+                    </h3>
+                    <button onclick="openDeptModal(null)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition flex items-center">
+                        <i class="fa-solid fa-plus mr-1.5"></i> เพิ่มแผนก / ผู้รับผิดชอบใหม่
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-semibold border-b">
+                                <th class="p-3">ชื่อแผนก</th>
+                                <th class="p-3">ผู้รับผิดชอบหลัก (Person in Charge)</th>
+                                <th class="p-3">LINE ID / Group Token</th>
+                                <th class="p-3 text-center">จัดการ (Edit / Delete)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminDeptTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ADMIN SUBTAB 3: CATEGORY MANAGEMENT -->
+            <div id="adminPanelCat" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center">
+                        <i class="fa-solid fa-tags text-indigo-600 mr-2"></i> จัดการหมวดหมู่สิ่งแวดล้อม (Env Categories)
+                    </h3>
+                    <button onclick="openCatModal(null)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition flex items-center">
+                        <i class="fa-solid fa-plus mr-1.5"></i> เพิ่มหมวดหมู่ใหม่
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-semibold border-b">
+                                <th class="p-3">รหัสหมวดหมู่</th>
+                                <th class="p-3">ชื่อหมวดหมู่สิ่งแวดล้อม</th>
+                                <th class="p-3">คำอธิบายขอบเขต</th>
+                                <th class="p-3 text-center">จัดการ (Edit / Delete)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminCatTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MODAL FOR ADD/EDIT DEPARTMENT -->
+    <div id="deptModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <h3 class="font-bold text-slate-800 text-base" id="deptModalTitle">เพิ่ม/แก้ไขแผนก</h3>
+            <input type="hidden" id="deptEditId">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อแผนก</label>
+                <input type="text" id="deptInputName" placeholder="เช่น ฝ่ายผลิต (Production)" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อผู้รับผิดชอบ (Person in Charge)</label>
+                <input type="text" id="deptInputPic" placeholder="เช่น นายสมชาย สายช่าง" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">LINE ID หรือ Group Token</label>
+                <input type="text" id="deptInputLine" placeholder="เช่น @somchai_maint" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeDeptModal()" class="px-4 py-2 border rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+                <button onclick="saveDeptData()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium">บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FOR ADD/EDIT CATEGORY -->
+    <div id="catModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <h3 class="font-bold text-slate-800 text-base" id="catModalTitle">เพิ่ม/แก้ไขหมวดหมู่</h3>
+            <input type="hidden" id="catEditId">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">รหัสหมวดหมู่</label>
+                <input type="text" id="catInputCode" placeholder="เช่น ENV-01" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อหมวดหมู่สิ่งแวดล้อม</label>
+                <input type="text" id="catInputName" placeholder="เช่น การจัดการขยะ/ของเสีย (Waste)" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">คำอธิบายขอบเขต</label>
+                <input type="text" id="catInputDesc" placeholder="เช่น ขยะอันตราย ปะปน ถังขยะไม่ถูกต้อง" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeCatModal()" class="px-4 py-2 border rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+                <button onclick="saveCatData()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium">บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDchNLUlXXTeK34IwExXeADqAckH9lQDBs",
+  authDomain: "env-patrol.firebaseapp.com",
+  databaseURL: "https://env-patrol-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "env-patrol",
+  storageBucket: "env-patrol.firebasestorage.app",
+  messagingSenderId: "188656252848",
+  appId: "1:188656252848:web:51576def01eb46f9444875",
+  measurementId: "G-Z4E8VXWJTX"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+        let isAdminLoggedIn = false;
+
+        // INITIAL DATA SETS
+        let departments = [
+            { id: 1, name: 'ฝ่ายซ่อมบำรุง (Maintenance)', pic: 'สมชาย สายช่าง', lineId: '@somchai_maint' },
+            { id: 2, name: 'ฝ่ายผลิต (Production)', pic: 'วิภาดา งานดี', lineId: '@wipada_prod' },
+            { id: 3, name: 'ฝ่ายคลังสินค้า (Warehouse)', pic: 'ณัฐพงษ์ คลังแน่น', lineId: '@nattapong_wh' },
+            { id: 4, name: 'ฝ่ายธุรการ/สถานที่ (GA & Facility)', pic: 'รังสิกร จัดการเลิศ', lineId: '@ga_team_line' }
+        ];
+
+        let categories = [
+            { id: 1, code: 'ENV-01', name: 'การจัดการขยะ/ของเสีย (Waste)', desc: 'ขยะอันตราย ปะปน ถังขยะไม่ถูกต้อง' },
+            { id: 2, code: 'ENV-02', name: 'การรั่วไหลของสารเคมี/น้ำมัน (Chemical)', desc: 'สารเคมีรั่วไหล ไม่มีถาดรอง' },
+            { id: 3, code: 'ENV-03', name: 'การบำบัดน้ำเสีย (Wastewater)', desc: 'ท่อบำบัด ค่าบำบัดน้ำเสียเกินมาตรฐาน' },
+            { id: 4, code: 'ENV-04', name: 'มลพิษทางอากาศ/กลิ่น/ฝุ่น (Air/Dust)', desc: 'กลิ่นควัน ท่อระบายอากาศชำรุด' },
+            { id: 5, code: 'ENV-05', name: 'การใช้อย่างสิ้นเปลือง/พลังงาน (Energy)', desc: 'การเปิดไฟ/แอร์ทิ้งไว้ รั่วไหลลมชลประทาน' }
+        ];
+
+        let patrolCases = [
+            { id: 'PATROL-2026-001', date: '2026-07-02', month: '07', location: 'คลังสินค้า B', deptId: 3, deptName: 'ฝ่ายคลังสินค้า (Warehouse)', pic: 'ณัฐพงษ์ คลังแน่น', catName: 'การจัดการขยะ/ของเสีย (Waste)', severity: 'Low', status: 'Resolved', fixDesc: 'จัดตั้งถังแยกขยะอันตรายเรียบร้อย' },
+            { id: 'PATROL-2026-002', date: '2026-07-10', month: '07', location: 'ไลน์ผลิต 2', deptId: 2, deptName: 'ฝ่ายผลิต (Production)', pic: 'วิภาดา งานดี', catName: 'มลพิษทางอากาศ/กลิ่น/ฝุ่น (Air/Dust)', severity: 'Medium', status: 'Resolved', fixDesc: 'ทำความสะอาดฟิลเตอร์ดักฝุ่นแล้ว' },
+            { id: 'PATROL-2026-003', date: '2026-07-15', month: '07', location: 'คลังสารเคมี A2', deptId: 1, deptName: 'ฝ่ายซ่อมบำรุง (Maintenance)', pic: 'สมชาย สายช่าง', catName: 'การรั่วไหลของสารเคมี/น้ำมัน (Chemical)', severity: 'High', status: 'Pending', fixDesc: 'ทำความสะอาดคราบรั่วไหล และเปลี่ยนปะเก็นวาล์วใหม่เรียบร้อย' },
+            { id: 'PATROL-2026-004', date: '2026-07-20', month: '07', location: 'อาคาร GA ชั้น 1', deptId: 4, deptName: 'ฝ่ายธุรการ/สถานที่ (GA & Facility)', pic: 'รังสิกร จัดการเลิศ', catName: 'การใช้อย่างสิ้นเปลือง/พลังงาน (Energy)', severity: 'Low', status: 'Pending', fixDesc: '' }
+        ];
+
+        // CHART INSTANCES
+        let chart1, chart2, chart3, chart4;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            renderDeptOptions();
+            renderCategoryOptions();
+            renderAdminDeptTable();
+            renderAdminCatTable();
+            renderAdminReviewTable();
+            initDashboardCharts();
+            generateLiveReport();
+        });
+
+        // VIEW SWITCHING WITH PASSWORD CHECK '1234'
+        function switchTab(view) {
+            if (view === 'user') {
+                document.getElementById('userView').classList.remove('hidden');
+                document.getElementById('adminView').classList.add('hidden');
+                document.getElementById('btnTabUser').className = 'bg-emerald-700 px-4 py-2 rounded-lg hover:bg-emerald-600 transition flex items-center';
+                document.getElementById('btnTabAdmin').className = 'bg-slate-700 px-4 py-2 rounded-lg hover:bg-slate-600 transition flex items-center';
+            } else {
+                if (!isAdminLoggedIn) {
+                    const pass = prompt("กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบผู้ดูแลระบบ (Admin):");
+                    if (pass === "1234") {
+                        isAdminLoggedIn = true;
+                        alert("เข้าสู่ระบบ Admin สำเร็จ!");
+                    } else {
+                        alert("รหัสผ่านไม่ถูกต้อง! ไม่สามารถเข้าสู่ระบบผู้ดูแลระบบได้");
+                        return;
+                    }
+                }
+                document.getElementById('userView').classList.add('hidden');
+                document.getElementById('adminView').classList.remove('hidden');
+                document.getElementById('btnTabAdmin').className = 'bg-emerald-700 px-4 py-2 rounded-lg hover:bg-emerald-600 transition flex items-center';
+                document.getElementById('btnTabUser').className = 'bg-slate-700 px-4 py-2 rounded-lg hover:bg-slate-600 transition flex items-center';
+            }
+        }
+
+        // USER SUB TAB SWITCHING
+        function switchUserSubTab(tab) {
+            document.getElementById('userPanelDashboard').classList.add('hidden');
+            document.getElementById('userPanelForm').classList.add('hidden');
+            document.getElementById('userPanelReport').classList.add('hidden');
+
+            document.getElementById('userSubTabDashboard').className = 'pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center';
+            document.getElementById('userSubTabForm').className = 'pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center';
+            document.getElementById('userSubTabReport').className = 'pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center';
+
+            if(tab === 'dashboard') {
+                document.getElementById('userPanelDashboard').classList.remove('hidden');
+                document.getElementById('userSubTabDashboard').className = 'pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center';
+            } else if(tab === 'form') {
+                document.getElementById('userPanelForm').classList.remove('hidden');
+                document.getElementById('userSubTabForm').className = 'pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center';
+            } else if(tab === 'report') {
+                document.getElementById('userPanelReport').classList.remove('hidden');
+                document.getElementById('userSubTabReport').className = 'pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center';
+                generateLiveReport();
+            }
+        }
+
+        // ACTUAL RESET SYSTEM WITH CODE '9999'
+        function resetSystemData() {
+            const code = prompt("⚠️ เตือนภัย! การล้างข้อมูลจะทำการลบเคสและสถิติทั้งหมด\nกรุณากรอกรหัสยืนยัน '9999' เพื่อล้างข้อมูล:");
+            if (code === "9999") {
+                // Clear patrol cases array
+                patrolCases = [];
+                
+                // Reset stats displays
+                document.getElementById('statTotal').innerText = '0';
+                document.getElementById('statResolved').innerText = '0';
+                document.getElementById('statPending').innerText = '0';
+                document.getElementById('statRate').innerText = '0.0%';
+
+                // Reset Chart Data
+                [chart1, chart2, chart3, chart4].forEach(c => {
+                    if (c) {
+                        c.data.datasets.forEach(ds => ds.data = ds.data.map(() => 0));
+                        c.update();
+                    }
+                });
+
+                renderAdminReviewTable();
+                generateLiveReport();
+                alert("ล้างข้อมูลทั้งหมดในระบบเรียบร้อยแล้ว!");
+            } else {
+                alert("รหัสยืนยันไม่ถูกต้อง! ยกเลิกการล้างข้อมูล");
+            }
+        }
+
+        function switchAdminSubTab(sub) {
+            const panels = ['Review', 'Dept', 'Cat'];
+            panels.forEach(p => {
+                document.getElementById('adminPanel' + p).classList.add('hidden');
+                document.getElementById('adminSubTab' + p).className = 'pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center';
+            });
+
+            if(sub === 'review') {
+                document.getElementById('adminPanelReview').classList.remove('hidden');
+                document.getElementById('adminSubTabReview').className = 'pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center';
+            } else if(sub === 'dept') {
+                document.getElementById('adminPanelDept').classList.remove('hidden');
+                document.getElementById('adminSubTabDept').className = 'pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center';
+            } else if(sub === 'cat') {
+                document.getElementById('adminPanelCat').classList.remove('hidden');
+                document.getElementById('adminSubTabCat').className = 'pb-3 border-b-2 border-indigo-600 text-indigo-700 font-bold text-sm flex items-center';
+            }
+        }
+
+        // RENDER OPTIONS
+        function renderDeptOptions() {
+            const select = document.getElementById('departmentSelect');
+            const reportSelect = document.getElementById('reportDeptSelect');
+            
+            select.innerHTML = '<option value="">-- เลือกแผนก --</option>';
+            reportSelect.innerHTML = '<option value="all">ทุกแผนก (All Departments)</option>';
+            
+            departments.forEach(d => {
+                select.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+                reportSelect.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+            });
+        }
+
+        function renderCategoryOptions() {
+            const select = document.getElementById('categorySelect');
+            select.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>';
+            categories.forEach(c => {
+                select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            });
+        }
+
+        function updatePersonInCharge() {
+            const deptId = document.getElementById('departmentSelect').value;
+            const display = document.getElementById('picDisplay');
+            const found = departments.find(d => d.id == deptId);
+            if (found) {
+                display.value = `${found.pic} (LINE: ${found.lineId})`;
+            } else {
+                display.value = 'กรุณาเลือกแผนก';
+            }
+        }
+
+        // RENDER ADMIN TABLES
+        function renderAdminDeptTable() {
+            const tbody = document.getElementById('adminDeptTableBody');
+            tbody.innerHTML = '';
+            departments.forEach((d, idx) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-medium text-slate-800">${d.name}</td>
+                        <td class="p-3 text-slate-700">${d.pic}</td>
+                        <td class="p-3"><span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-mono px-2.5 py-1 rounded-full"><i class="fa-brands fa-line mr-1"></i>${d.lineId}</span></td>
+                        <td class="p-3 text-center">
+                            <button onclick="openDeptModal(${d.id})" class="text-indigo-600 hover:text-indigo-800 mr-3 text-xs font-semibold"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
+                            <button onclick="deleteDept(${d.id})" class="text-red-500 hover:text-red-700 text-xs font-semibold"><i class="fa-solid fa-trash"></i> ลบ</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderAdminCatTable() {
+            const tbody = document.getElementById('adminCatTableBody');
+            tbody.innerHTML = '';
+            categories.forEach((c) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-mono text-xs font-bold text-slate-600">${c.code}</td>
+                        <td class="p-3 font-medium text-slate-800">${c.name}</td>
+                        <td class="p-3 text-slate-500 text-xs">${c.desc}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="openCatModal(${c.id})" class="text-indigo-600 hover:text-indigo-800 mr-3 text-xs font-semibold"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
+                            <button onclick="deleteCat(${c.id})" class="text-red-500 hover:text-red-700 text-xs font-semibold"><i class="fa-solid fa-trash"></i> ลบ</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderAdminReviewTable() {
+            const tbody = document.getElementById('adminReviewTableBody');
+            tbody.innerHTML = '';
+            const pendingWithFixes = patrolCases.filter(c => c.status === 'Pending' && c.fixDesc);
+            
+            if(pendingWithFixes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">ไม่มีรายการรอตรวจสอบอนุมัติการแก้ไข</td></tr>';
+                return;
+            }
+
+            pendingWithFixes.forEach(c => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-3 font-mono text-xs font-bold text-slate-700">${c.id}</td>
+                        <td class="p-3">
+                            <p class="font-medium text-slate-800">${c.location}</p>
+                            <span class="text-xs text-slate-500">${c.catName}</span>
+                        </td>
+                        <td class="p-3">
+                            <p class="font-medium">${c.pic}</p>
+                            <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">${c.deptName}</span>
+                        </td>
+                        <td class="p-3">
+                            <p class="text-xs text-slate-700 mb-1 font-semibold">"${c.fixDesc}"</p>
+                            <div class="flex space-x-1">
+                                <span class="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200"><i class="fa-solid fa-images"></i> รูปแก้ #1</span>
+                                <span class="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200"><i class="fa-solid fa-images"></i> รูปแก้ #2</span>
+                            </div>
+                        </td>
+                        <td class="p-3 text-center">
+                            <div class="flex justify-center space-x-2">
+                                <button onclick="approveCase('${c.id}', true)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-semibold shadow-sm flex items-center">
+                                    <i class="fa-solid fa-check mr-1"></i> ยอมรับ (Resolved)
+                                </button>
+                                <button onclick="approveCase('${c.id}', false)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-semibold shadow-sm flex items-center">
+                                    <i class="fa-solid fa-xmark mr-1"></i> ยังไม่ยอมรับ (Reject)
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // EDIT & DELETE DEPARTMENT
+        function openDeptModal(id) {
+            document.getElementById('deptModal').classList.remove('hidden');
+            if (id) {
+                const item = departments.find(d => d.id == id);
+                document.getElementById('deptModalTitle').innerText = 'แก้ไขข้อมูลแผนก';
+                document.getElementById('deptEditId').value = item.id;
+                document.getElementById('deptInputName').value = item.name;
+                document.getElementById('deptInputPic').value = item.pic;
+                document.getElementById('deptInputLine').value = item.lineId;
+            } else {
+                document.getElementById('deptModalTitle').innerText = 'เพิ่มแผนกใหม่';
+                document.getElementById('deptEditId').value = '';
+                document.getElementById('deptInputName').value = '';
+                document.getElementById('deptInputPic').value = '';
+                document.getElementById('deptInputLine').value = '';
+            }
+        }
+
+        function closeDeptModal() { document.getElementById('deptModal').classList.add('hidden'); }
+
+        function saveDeptData() {
+            const id = document.getElementById('deptEditId').value;
+            const name = document.getElementById('deptInputName').value;
+            const pic = document.getElementById('deptInputPic').value;
+            const line = document.getElementById('deptInputLine').value;
+
+            if (!name || !pic) { alert('กรุณากรอกข้อมูลให้ครบถ้วน'); return; }
+
+            if (id) {
+                const item = departments.find(d => d.id == id);
+                item.name = name; item.pic = pic; item.lineId = line;
+            } else {
+                departments.push({ id: Date.now(), name: name, pic: pic, lineId: line });
+            }
+
+            closeDeptModal();
+            renderDeptOptions();
+            renderAdminDeptTable();
+            alert('บันทึกข้อมูลแผนกเรียบร้อยแล้ว!');
+        }
+
+        function deleteDept(id) {
+            if (confirm('คุณต้องการลบแผนกนี้ใช่หรือไม่?')) {
+                departments = departments.filter(d => d.id != id);
+                renderDeptOptions();
+                renderAdminDeptTable();
+            }
+        }
+
+        // EDIT & DELETE CATEGORY
+        function openCatModal(id) {
+            document.getElementById('catModal').classList.remove('hidden');
+            if (id) {
+                const item = categories.find(c => c.id == id);
+                document.getElementById('catModalTitle').innerText = 'แก้ไขหมวดหมู่สิ่งแวดล้อม';
+                document.getElementById('catEditId').value = item.id;
+                document.getElementById('catInputCode').value = item.code;
+                document.getElementById('catInputName').value = item.name;
+                document.getElementById('catInputDesc').value = item.desc;
+            } else {
+                document.getElementById('catModalTitle').innerText = 'เพิ่มหมวดหมู่สิ่งแวดล้อมใหม่';
+                document.getElementById('catEditId').value = '';
+                document.getElementById('catInputCode').value = 'ENV-0' + (categories.length + 1);
+                document.getElementById('catInputName').value = '';
+                document.getElementById('catInputDesc').value = '';
+            }
+        }
+
+        function closeCatModal() { document.getElementById('catModal').classList.add('hidden'); }
+
+        function saveCatData() {
+            const id = document.getElementById('catEditId').value;
+            const code = document.getElementById('catInputCode').value;
+            const name = document.getElementById('catInputName').value;
+            const desc = document.getElementById('catInputDesc').value;
+
+            if (!name) { alert('กรุณากรอกชื่อหมวดหมู่'); return; }
+
+            if (id) {
+                const item = categories.find(c => c.id == id);
+                item.code = code; item.name = name; item.desc = desc;
+            } else {
+                categories.push({ id: Date.now(), code: code, name: name, desc: desc });
+            }
+
+            closeCatModal();
+            renderCategoryOptions();
+            renderAdminCatTable();
+            alert('บันทึกหมวดหมู่เรียบร้อยแล้ว!');
+        }
+
+        function deleteCat(id) {
+            if (confirm('คุณต้องการลบหมวดหมู่นี้ใช่หรือไม่?')) {
+                categories = categories.filter(c => c.id != id);
+                renderCategoryOptions();
+                renderAdminCatTable();
+            }
+        }
+
+        // SUBMIT NEW PATROL FORM
+        function submitPatrolForm(e) {
+            e.preventDefault();
+            const loc = document.getElementById('location').value;
+            const deptId = document.getElementById('departmentSelect').value;
+            const dept = departments.find(d => d.id == deptId);
+            const catId = document.getElementById('categorySelect').value;
+            const cat = categories.find(c => c.id == catId);
+            const sev = document.getElementById('severity').value;
+            const desc = document.getElementById('description').value;
+
+            const newCase = {
+                id: 'PATROL-2026-0' + (patrolCases.length + 1),
+                date: new Date().toISOString().split('T')[0],
+                month: '07',
+                location: loc,
+                deptId: parseInt(deptId),
+                deptName: dept ? dept.name : '-',
+                pic: dept ? dept.pic : '-',
+                catName: cat ? cat.name : '-',
+                severity: sev,
+                status: 'Pending',
+                fixDesc: ''
+            };
+
+            patrolCases.unshift(newCase);
+            alert(`บันทึกข้อมูลสำเร็จ!\nรหัสเคส: ${newCase.id}\nระบบส่งแจ้งเตือนไปยัง LINE ผู้รับผิดชอบ (${dept ? dept.pic : ''}) เรียบร้อยแล้ว`);
+            document.getElementById('patrolForm').reset();
+            document.getElementById('picDisplay').value = 'กรุณาเลือกแผนก';
+            generateLiveReport();
+        }
+
+        // APPROVE / REJECT FIX
+        function approveCase(caseId, isApproved) {
+            const found = patrolCases.find(c => c.id === caseId);
+            if (found) {
+                if (isApproved) {
+                    found.status = 'Resolved';
+                    alert(`อนุมัติเคส ${caseId} เรียบร้อยแล้ว! สถานะเปลี่ยนเป็น Resolved`);
+                } else {
+                    found.fixDesc = '';
+                    alert(`ส่งตีกลับเคส ${caseId} ไปยังผู้รับผิดชอบผ่าน LINE เรียบร้อยแล้ว`);
+                }
+                renderAdminReviewTable();
+                generateLiveReport();
+            }
+        }
+
+        // GENERATE LIVE REPORT TABLE
+        function generateLiveReport() {
+            const selectedDept = document.getElementById('reportDeptSelect').value;
+            const selectedMonth = document.getElementById('reportMonthSelect').value;
+            const selectedStatus = document.getElementById('reportStatusSelect').value;
+
+            let filtered = patrolCases.filter(c => {
+                let matchDept = (selectedDept === 'all') || (c.deptId == selectedDept);
+                let matchMonth = (selectedMonth === 'all') || (c.month === selectedMonth);
+                let matchStatus = (selectedStatus === 'all') || (c.status === selectedStatus);
+                return matchDept && matchMonth && matchStatus;
+            });
+
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-slate-400">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>';
+            } else {
+                filtered.forEach(c => {
+                    let statusBadge = c.status === 'Resolved' 
+                        ? '<span class="bg-emerald-100 text-emerald-800 text-[11px] px-2 py-0.5 rounded-full font-medium">Resolved</span>'
+                        : '<span class="bg-amber-100 text-amber-800 text-[11px] px-2 py-0.5 rounded-full font-medium">Pending</span>';
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-2.5 font-mono font-bold text-slate-700">${c.id}</td>
+                            <td class="p-2.5 text-slate-500">${c.date}</td>
+                            <td class="p-2.5 font-medium text-slate-800">${c.location}</td>
+                            <td class="p-2.5">${c.deptName}</td>
+                            <td class="p-2.5">${c.pic}</td>
+                            <td class="p-2.5">${c.catName}</td>
+                            <td class="p-2.5"><span class="bg-slate-100 px-2 py-0.5 rounded text-[11px] font-semibold">${c.severity}</span></td>
+                            <td class="p-2.5 text-center">${statusBadge}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('reportHeaderMeta').innerText = 
+                `ข้อมูลประจำเดือน: ${selectedMonth === 'all' ? 'ทุกเดือน' : selectedMonth} | แผนก: ${selectedDept === 'all' ? 'ทุกแผนก' : selectedDept} | สถานะ: ${selectedStatus === 'all' ? 'ทุกสถานะ' : selectedStatus} (พบทั้งหมด ${filtered.length} รายการ)`;
+        }
+
+        // PREVIEW IMAGE
+        function previewImg(input, prevId, placeId) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById(prevId).src = e.target.result;
+                    document.getElementById(prevId).classList.remove('hidden');
+                    document.getElementById(placeId).classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // INIT CHARTS
+        function initDashboardCharts() {
+            const promptFont = { family: 'Prompt' };
+
+            chart1 = new Chart(document.getElementById('chart1Monthly'), {
+                type: 'bar',
+                data: {
+                    labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.'],
+                    datasets: [
+                        { label: 'แก้ไขแล้ว (Resolved)', data: [12, 15, 14, 18, 16, 12, 11], backgroundColor: '#10b981', borderRadius: 5 },
+                        { label: 'ยังไม่แก้ไข (Pending)', data: [2, 3, 1, 4, 2, 3, 2], backgroundColor: '#f59e0b', borderRadius: 5 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: promptFont } } } }
+            });
+
+            chart2 = new Chart(document.getElementById('chart2Department'), {
+                type: 'bar',
+                data: {
+                    labels: ['ฝ่ายผลิต', 'ฝ่ายซ่อมบำรุง', 'ฝ่ายคลังสินค้า', 'ฝ่าย GA & Facility'],
+                    datasets: [
+                        { label: 'แก้ไขแล้ว (Resolved)', data: [38, 28, 18, 14], backgroundColor: '#10b981', borderRadius: 5 },
+                        { label: 'ยังไม่แก้ไข (Pending)', data: [6, 5, 4, 2], backgroundColor: '#f59e0b', borderRadius: 5 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: promptFont } } } }
+            });
+
+            chart3 = new Chart(document.getElementById('chart3Category'), {
+                type: 'bar',
+                data: {
+                    labels: ['ขยะ/ของเสีย', 'สารเคมี/น้ำมัน', 'น้ำเสีย', 'มลพิษอากาศ/ฝุ่น', 'พลังงาน'],
+                    datasets: [
+                        { label: 'แก้ไขแล้ว (Resolved)', data: [32, 24, 18, 14, 10], backgroundColor: '#10b981', borderRadius: 5 },
+                        { label: 'ยังไม่แก้ไข (Pending)', data: [5, 4, 3, 3, 2], backgroundColor: '#f59e0b', borderRadius: 5 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: promptFont } } } }
+            });
+
+            chart4 = new Chart(document.getElementById('chart4Severity'), {
+                type: 'bar',
+                data: {
+                    labels: ['Low (เล็กน้อย)', 'Medium (ปานกลาง)', 'High (สูง)', 'Critical (รุนแรงมาก)'],
+                    datasets: [
+                        { label: 'แก้ไขแล้ว (Resolved)', data: [45, 32, 16, 5], backgroundColor: '#10b981', borderRadius: 5 },
+                        { label: 'ยังไม่แก้ไข (Pending)', data: [3, 8, 5, 1], backgroundColor: '#f59e0b', borderRadius: 5 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: promptFont } } } }
+            });
+        }
+    </script>
+</body>
+</html>
