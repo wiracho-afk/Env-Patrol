@@ -12,6 +12,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Google Fonts: Prompt -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK (Compat Versions) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
     <style>
         body { font-family: 'Prompt', sans-serif; }
         @media print {
@@ -210,7 +216,7 @@
                 </form>
             </div>
 
-            <!-- SECTION 3: REPORT GENERATOR (MOVED TO USER VIEW) -->
+            <!-- SECTION 3: REPORT GENERATOR -->
             <div id="userPanelReport" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
                 <div class="flex justify-between items-center border-b pb-4">
                     <div>
@@ -453,28 +459,21 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+        // Initialize Firebase (Compat API)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDchNLUlXXTeK34IwExXeADqAckH9lQDBs",
+            authDomain: "env-patrol.firebaseapp.com",
+            databaseURL: "https://env-patrol-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "env-patrol",
+            storageBucket: "env-patrol.firebasestorage.app",
+            messagingSenderId: "188656252848",
+            appId: "1:188656252848:web:51576def01eb46f9444875",
+            measurementId: "G-Z4E8VXWJTX"
+        };
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDchNLUlXXTeK34IwExXeADqAckH9lQDBs",
-  authDomain: "env-patrol.firebaseapp.com",
-  databaseURL: "https://env-patrol-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "env-patrol",
-  storageBucket: "env-patrol.firebasestorage.app",
-  messagingSenderId: "188656252848",
-  appId: "1:188656252848:web:51576def01eb46f9444875",
-  measurementId: "G-Z4E8VXWJTX"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        firebase.analytics();
 
         let isAdminLoggedIn = false;
 
@@ -566,16 +565,13 @@ const analytics = getAnalytics(app);
         function resetSystemData() {
             const code = prompt("⚠️ เตือนภัย! การล้างข้อมูลจะทำการลบเคสและสถิติทั้งหมด\nกรุณากรอกรหัสยืนยัน '9999' เพื่อล้างข้อมูล:");
             if (code === "9999") {
-                // Clear patrol cases array
                 patrolCases = [];
                 
-                // Reset stats displays
                 document.getElementById('statTotal').innerText = '0';
                 document.getElementById('statResolved').innerText = '0';
                 document.getElementById('statPending').innerText = '0';
                 document.getElementById('statRate').innerText = '0.0%';
 
-                // Reset Chart Data
                 [chart1, chart2, chart3, chart4].forEach(c => {
                     if (c) {
                         c.data.datasets.forEach(ds => ds.data = ds.data.map(() => 0));
@@ -647,7 +643,7 @@ const analytics = getAnalytics(app);
         function renderAdminDeptTable() {
             const tbody = document.getElementById('adminDeptTableBody');
             tbody.innerHTML = '';
-            departments.forEach((d, idx) => {
+            departments.forEach((d) => {
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50">
                         <td class="p-3 font-medium text-slate-800">${d.name}</td>
