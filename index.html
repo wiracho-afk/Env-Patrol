@@ -191,7 +191,7 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">ถ่ายรูปปัญหาจากกล้องโดยตรง (สูงสุด 2 รูป)</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <!-- Input 1: ถ่ายรูปจากกล้อง -->
+                            <!-- Input 1 -->
                             <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('pImg1').click()">
                                 <input type="file" id="pImg1" accept="image/*" capture="environment" class="hidden" onchange="previewImg(this, 'prev1', 'place1')">
                                 <div id="place1">
@@ -201,7 +201,7 @@
                                 <img id="prev1" class="hidden w-full h-32 object-cover rounded-lg shadow-sm">
                             </div>
 
-                            <!-- Input 2: ถ่ายรูปจากกล้อง -->
+                            <!-- Input 2 -->
                             <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('pImg2').click()">
                                 <input type="file" id="pImg2" accept="image/*" capture="environment" class="hidden" onchange="previewImg(this, 'prev2', 'place2')">
                                 <div id="place2">
@@ -253,7 +253,7 @@
                                 <option value="07" selected>กรกฎาคม</option>
                                 <option value="08">สิงหาคม</option>
                                 <option value="09">กันยายน</option>
-                                <option value="10">ตารางกุมภาพันธ์</option>
+                                <option value="10">ตุลาคม</option>
                                 <option value="11">พฤศจิกายน</option>
                                 <option value="12">ธันวาคม</option>
                             </select>
@@ -319,7 +319,7 @@
                     <h2 class="text-2xl font-bold flex items-center">
                         <i class="fa-solid fa-user-shield text-amber-400 mr-3"></i> ระบบผู้ดูแลระบบ (Admin Management Panel)
                     </h2>
-                    <p class="text-xs text-slate-300 mt-1">จัดการแผนก/ผู้รับผิดชอบ, หมวดหมู่สิ่งแวดล้อม และอนุมัติงานแก้ไข</p>
+                    <p class="text-xs text-slate-300 mt-1">จัดการแผนก/ผู้รับผิดชอบ, หมวดหมู่สิ่งแวดล้อม, ตรวจสอบงานแก้ไข และแก้ไข/ยกเลิกเคส</p>
                 </div>
                 <div class="flex items-center space-x-3">
                     <button onclick="resetSystemData()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-sm flex items-center">
@@ -332,13 +332,16 @@
             <!-- ADMIN TAB MENU -->
             <div class="flex border-b border-slate-300 space-x-4">
                 <button onclick="switchAdminSubTab('review')" id="adminSubTabReview" class="pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center">
-                    <i class="fa-solid fa-list-check mr-2"></i> 1. ตรวจสอบงานแก้ไข (Approve Fixes)
+                    <i class="fa-solid fa-list-check mr-2"></i> 1. ตรวจสอบงานแก้ไข
                 </button>
                 <button onclick="switchAdminSubTab('dept')" id="adminSubTabDept" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center">
                     <i class="fa-solid fa-building mr-2"></i> 2. แผนก & ผู้รับผิดชอบ & LINE
                 </button>
                 <button onclick="switchAdminSubTab('cat')" id="adminSubTabCat" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center">
                     <i class="fa-solid fa-tags mr-2"></i> 3. หมวดหมู่สิ่งแวดล้อม
+                </button>
+                <button onclick="switchAdminSubTab('cases')" id="adminSubTabCases" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center">
+                    <i class="fa-solid fa-list-ul mr-2"></i> 4. จัดการ/แก้ไข/ลบ รายงานเคส
                 </button>
             </div>
 
@@ -418,8 +421,77 @@
                 </div>
             </div>
 
+            <!-- ADMIN SUBTAB 4: ALL CASES EDIT / DELETE MANAGEMENT -->
+            <div id="adminPanelCases" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
+                <div class="flex justify-between items-center border-b pb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-lg flex items-center">
+                            <i class="fa-solid fa-list-ul text-red-600 mr-2"></i> จัดการเคสรายงานทั้งหมด (แก้ไข / ลบเคสซ้ำ)
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">ใช้สำหรับยกเลิกรายการที่ส่งซ้ำ หรือแก้ไขรายละเอียดข้อมูลเคสที่กรอกผิด</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-800 text-white uppercase font-semibold text-[11px]">
+                                <th class="p-3">รหัสเคส</th>
+                                <th class="p-3">วันที่</th>
+                                <th class="p-3">พื้นที่</th>
+                                <th class="p-3">แผนก</th>
+                                <th class="p-3">หมวดหมู่</th>
+                                <th class="p-3">รายละเอียดปัญหา</th>
+                                <th class="p-3 text-center">สถานะ</th>
+                                <th class="p-3 text-center">การจัดการ (Action)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminCasesTableBody" class="divide-y divide-slate-200">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
 
+    </div>
+
+    <!-- MODAL FOR IMAGE PREVIEW -->
+    <div id="imagePreviewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="closeImageModal()">
+        <div class="relative max-w-3xl w-full flex flex-col items-center" onclick="event.stopPropagation()">
+            <button onclick="closeImageModal()" class="absolute -top-10 right-0 text-white text-2xl font-bold hover:text-amber-400">
+                <i class="fa-solid fa-xmark"></i> ปิดหน้าต่าง
+            </button>
+            <img id="modalPreviewImage" src="" class="max-h-[80vh] max-w-full rounded-lg shadow-2xl object-contain border-2 border-white">
+        </div>
+    </div>
+
+    <!-- MODAL FOR EDIT CASE DATA (ADMIN) -->
+    <div id="editCaseModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+            <h3 class="font-bold text-slate-800 text-base" id="editCaseModalTitle">แก้ไขข้อมูลเคส</h3>
+            <input type="hidden" id="editCaseFirebaseId">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">พื้นที่พบปัญหา</label>
+                <input type="text" id="editCaseLocation" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">รายละเอียดปัญหา</label>
+                <textarea id="editCaseDescription" rows="3" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">สถานะ</label>
+                <select id="editCaseStatus" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                    <option value="Pending">Pending (ยังไม่แก้ไข)</option>
+                    <option value="Resolved">Resolved (แก้ไขแล้ว)</option>
+                </select>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeEditCaseModal()" class="px-4 py-2 border rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+                <button onclick="saveEditCaseData()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium">บันทึกการแก้ไข</button>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL FOR ADD/EDIT DEPARTMENT -->
@@ -518,6 +590,7 @@
                 }
                 updateDashboardStats();
                 renderAdminReviewTable();
+                renderAdminCasesTable();
                 generateLiveReport();
             });
 
@@ -550,7 +623,7 @@
             });
         }
 
-        // 3. จัดการแผนก (เพิ่ม/แก้ไข/ลบ ใน Firebase)
+        // 3. จัดการแผนก
         function openDeptModal(id) {
             document.getElementById('deptModal').classList.remove('hidden');
             if (id) {
@@ -569,9 +642,7 @@
             }
         }
 
-        function closeDeptModal() { 
-            document.getElementById('deptModal').classList.add('hidden'); 
-        }
+        function closeDeptModal() { document.getElementById('deptModal').classList.add('hidden'); }
 
         function saveDeptData() {
             const id = document.getElementById('deptEditId').value;
@@ -579,26 +650,17 @@
             const pic = document.getElementById('deptInputPic').value.trim();
             const line = document.getElementById('deptInputLine').value.trim();
 
-            if (!name || !pic) { 
-                alert('กรุณากรอกชื่อแผนกและผู้รับผิดชอบให้ครบถ้วน'); 
-                return; 
-            }
+            if (!name || !pic) { alert('กรุณากรอกชื่อแผนกและผู้รับผิดชอบให้ครบถ้วน'); return; }
 
             const deptPayload = { name: name, pic: pic, lineId: line };
 
             if (id) {
                 db.ref('departments/' + id).update(deptPayload)
-                    .then(() => {
-                        alert('อัปเดตข้อมูลแผนกเรียบร้อยแล้ว!');
-                        closeDeptModal();
-                    })
+                    .then(() => { alert('อัปเดตข้อมูลแผนกเรียบร้อยแล้ว!'); closeDeptModal(); })
                     .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
             } else {
                 db.ref('departments').push(deptPayload)
-                    .then(() => {
-                        alert('เพิ่มแผนกใหม่เรียบร้อยแล้ว!');
-                        closeDeptModal();
-                    })
+                    .then(() => { alert('เพิ่มแผนกใหม่เรียบร้อยแล้ว!'); closeDeptModal(); })
                     .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
             }
         }
@@ -611,7 +673,7 @@
             }
         }
 
-        // 4. จัดการหมวดหมู่ (เพิ่ม/แก้ไข/ลบ ใน Firebase)
+        // 4. จัดการหมวดหมู่
         function openCatModal(id) {
             document.getElementById('catModal').classList.remove('hidden');
             if (id) {
@@ -630,9 +692,7 @@
             }
         }
 
-        function closeCatModal() { 
-            document.getElementById('catModal').classList.add('hidden'); 
-        }
+        function closeCatModal() { document.getElementById('catModal').classList.add('hidden'); }
 
         function saveCatData() {
             const id = document.getElementById('catEditId').value;
@@ -640,26 +700,17 @@
             const name = document.getElementById('catInputName').value.trim();
             const desc = document.getElementById('catInputDesc').value.trim();
 
-            if (!name) { 
-                alert('กรุณากรอกชื่อหมวดหมู่'); 
-                return; 
-            }
+            if (!name) { alert('กรุณากรอกชื่อหมวดหมู่'); return; }
 
             const catPayload = { code: code, name: name, desc: desc };
 
             if (id) {
                 db.ref('categories/' + id).update(catPayload)
-                    .then(() => {
-                        alert('อัปเดตหมวดหมู่เรียบร้อยแล้ว!');
-                        closeCatModal();
-                    })
+                    .then(() => { alert('อัปเดตหมวดหมู่เรียบร้อยแล้ว!'); closeCatModal(); })
                     .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
             } else {
                 db.ref('categories').push(catPayload)
-                    .then(() => {
-                        alert('เพิ่มหมวดหมู่ใหม่เรียบร้อยแล้ว!');
-                        closeCatModal();
-                    })
+                    .then(() => { alert('เพิ่มหมวดหมู่ใหม่เรียบร้อยแล้ว!'); closeCatModal(); })
                     .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
             }
         }
@@ -678,12 +729,8 @@
             
             if (code === "9999") {
                 db.ref('patrolCases').remove()
-                    .then(() => {
-                        alert("ล้างข้อมูลเคสทั้งหมดใน Firebase เรียบร้อยแล้ว!");
-                    })
-                    .catch(err => {
-                        alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + err.message);
-                    });
+                    .then(() => alert("ล้างข้อมูลเคสทั้งหมดใน Firebase เรียบร้อยแล้ว!"))
+                    .catch(err => alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + err.message));
             } else {
                 alert("รหัสยืนยันไม่ถูกต้อง! ยกเลิกการล้างข้อมูล");
             }
@@ -700,7 +747,6 @@
             const sev = document.getElementById('severity').value;
             const desc = document.getElementById('description').value;
 
-            // รันเลขเคสเรียงลำดับ เช่น PATROL-2026-001
             const nextSeq = String(patrolCases.length + 1).padStart(3, '0');
             const caseIdNumber = `PATROL-2026-${nextSeq}`;
 
@@ -726,7 +772,6 @@
                     alert(`บันทึกข้อมูลสำเร็จ!\nรหัสเคส: ${newCase.id}`);
                     document.getElementById('patrolForm').reset();
                     document.getElementById('picDisplay').value = 'กรุณาเลือกแผนก';
-                    // รีเซ็ตการแสดงผลรูปตัวอย่าง
                     tempImg1 = ""; tempImg2 = "";
                     document.getElementById('prev1').classList.add('hidden');
                     document.getElementById('place1').classList.remove('hidden');
@@ -784,7 +829,7 @@
         }
 
         function switchAdminSubTab(sub) {
-            const panels = ['Review', 'Dept', 'Cat'];
+            const panels = ['Review', 'Dept', 'Cat', 'Cases'];
             panels.forEach(p => {
                 document.getElementById('adminPanel' + p).classList.add('hidden');
                 document.getElementById('adminSubTab' + p).className = 'pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center';
@@ -799,6 +844,9 @@
             } else if(sub === 'cat') {
                 document.getElementById('adminPanelCat').classList.remove('hidden');
                 document.getElementById('adminSubTabCat').className = 'pb-3 border-b-2 border-indigo-600 text-indigo-700 font-bold text-sm flex items-center';
+            } else if(sub === 'cases') {
+                document.getElementById('adminPanelCases').classList.remove('hidden');
+                document.getElementById('adminSubTabCases').className = 'pb-3 border-b-2 border-red-600 text-red-700 font-bold text-sm flex items-center';
             }
         }
 
@@ -817,7 +865,6 @@
             updateChartsData();
         }
 
-        // 🔄 ฟังก์ชันประมวลผลคำนวณกราฟทั้ง 4
         function updateChartsData() {
             if (!chart1 || !chart2 || !chart3 || !chart4) return;
             
@@ -1018,7 +1065,77 @@
             }
         }
 
-        // 9. ระบบสร้างรายงานสด (เพิ่มรายละเอียดความผิดปกติ + รูปถ่าย 2 รูป)
+        // 9. แสดงรายการเคสทั้งหมดใน ADMIN (สำหรับลบ หรือ แก้ไข)
+        function renderAdminCasesTable() {
+            const tbody = document.getElementById('adminCasesTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (patrolCases.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-slate-400">ยังไม่มีเคสในระบบ</td></tr>';
+                return;
+            }
+
+            patrolCases.forEach(c => {
+                let statusBadge = c.status === 'Resolved' 
+                    ? '<span class="bg-emerald-100 text-emerald-800 text-[11px] px-2 py-0.5 rounded font-bold">Resolved</span>'
+                    : '<span class="bg-amber-100 text-amber-800 text-[11px] px-2 py-0.5 rounded font-bold">Pending</span>';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-mono font-bold text-slate-800">${c.id}</td>
+                        <td class="p-3 text-slate-600">${c.date || '-'}</td>
+                        <td class="p-3 font-medium text-slate-800">${c.location || '-'}</td>
+                        <td class="p-3 text-slate-700">${c.deptName || '-'}</td>
+                        <td class="p-3 text-slate-700">${c.catName || '-'}</td>
+                        <td class="p-3 text-slate-700 max-w-xs truncate">${c.description || '-'}</td>
+                        <td class="p-3 text-center">${statusBadge}</td>
+                        <td class="p-3 text-center space-x-2">
+                            <button onclick="openEditCaseModal('${c.firebaseId}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
+                            <button onclick="deleteCase('${c.firebaseId}', '${c.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold"><i class="fa-solid fa-trash"></i> ลบเคส</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openEditCaseModal(firebaseId) {
+            const item = patrolCases.find(c => c.firebaseId === firebaseId);
+            if (!item) return;
+            document.getElementById('editCaseFirebaseId').value = firebaseId;
+            document.getElementById('editCaseLocation').value = item.location || '';
+            document.getElementById('editCaseDescription').value = item.description || '';
+            document.getElementById('editCaseStatus').value = item.status || 'Pending';
+            document.getElementById('editCaseModal').classList.remove('hidden');
+        }
+
+        function closeEditCaseModal() { document.getElementById('editCaseModal').classList.add('hidden'); }
+
+        function saveEditCaseData() {
+            const fId = document.getElementById('editCaseFirebaseId').value;
+            const loc = document.getElementById('editCaseLocation').value.trim();
+            const desc = document.getElementById('editCaseDescription').value.trim();
+            const stat = document.getElementById('editCaseStatus').value;
+
+            db.ref('patrolCases/' + fId).update({
+                location: loc,
+                description: desc,
+                status: stat
+            }).then(() => {
+                alert('อัปเดตข้อมูลเคสเรียบร้อยแล้ว!');
+                closeEditCaseModal();
+            }).catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
+        }
+
+        function deleteCase(firebaseId, caseId) {
+            if (confirm(`คุณต้องการลบรายการเคส [${caseId}] ใช่หรือไม่?\nข้อมูลจะถูกลบออกจากฐานข้อมูลอย่างถาวร`)) {
+                db.ref('patrolCases/' + firebaseId).remove()
+                    .then(() => alert(`ลบเคส ${caseId} เรียบร้อยแล้ว`))
+                    .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
+            }
+        }
+
+        // 10. ระบบสร้างรายงานสด (คลิกดู Preview รูปภาพเต็มจอ)
         function generateLiveReport() {
             const tbody = document.getElementById('reportTableBody');
             if (!tbody) return;
@@ -1028,7 +1145,6 @@
             const selectedMonth = document.getElementById('reportMonthSelect') ? document.getElementById('reportMonthSelect').value : 'all';
             const selectedStatus = document.getElementById('reportStatusSelect') ? document.getElementById('reportStatusSelect').value : 'all';
 
-            // กรองข้อมูลตาม Filter
             let filteredCases = patrolCases.filter(c => {
                 let matchDept = (selectedDept === 'all') || (c.deptId == selectedDept);
                 let matchMonth = (selectedMonth === 'all') || (c.month === selectedMonth);
@@ -1044,13 +1160,13 @@
                         ? '<span class="bg-emerald-100 text-emerald-800 text-[11px] px-2.5 py-1 rounded-full font-bold">Resolved</span>'
                         : '<span class="bg-amber-100 text-amber-800 text-[11px] px-2.5 py-1 rounded-full font-bold">Pending</span>';
 
-                    // แสดงรูปถ่ายปัญหา (สูงสุด 2 รูป)
+                    // แสดงรูปถ่ายปัญหา (คลิกขยายดู Preview)
                     let imgHtml = '<div class="flex justify-center space-x-1.5">';
                     if (c.img1) {
-                        imgHtml += `<img src="${c.img1}" class="w-10 h-10 object-cover rounded border border-slate-300 shadow-sm cursor-pointer hover:scale-150 transition" onclick="window.open('${c.img1}')" title="กดดูรูปใหญ่">`;
+                        imgHtml += `<img src="${c.img1}" class="w-10 h-10 object-cover rounded border border-slate-300 shadow-sm cursor-pointer hover:scale-110 transition" onclick="openImageModal('${c.img1}')" title="กดเพื่อดูรูปขยาย">`;
                     }
                     if (c.img2) {
-                        imgHtml += `<img src="${c.img2}" class="w-10 h-10 object-cover rounded border border-slate-300 shadow-sm cursor-pointer hover:scale-150 transition" onclick="window.open('${c.img2}')" title="กดดูรูปใหญ่">`;
+                        imgHtml += `<img src="${c.img2}" class="w-10 h-10 object-cover rounded border border-slate-300 shadow-sm cursor-pointer hover:scale-110 transition" onclick="openImageModal('${c.img2}')" title="กดเพื่อดูรูปขยาย">`;
                     }
                     if (!c.img1 && !c.img2) {
                         imgHtml += '<span class="text-slate-400 text-[10px]">- ไม่มีรูป -</span>';
@@ -1076,6 +1192,16 @@
                 });
             }
             document.getElementById('reportHeaderMeta').innerText = `พบข้อมูลทั้งหมด ${filteredCases.length} รายการ`;
+        }
+
+        // 11. Modal ดูรูป Preview ขนาดใหญ่
+        function openImageModal(imgSrc) {
+            document.getElementById('modalPreviewImage').src = imgSrc;
+            document.getElementById('imagePreviewModal').classList.remove('hidden');
+        }
+
+        function closeImageModal() {
+            document.getElementById('imagePreviewModal').classList.add('hidden');
         }
 
         // Preview & Convert Image to Base64
