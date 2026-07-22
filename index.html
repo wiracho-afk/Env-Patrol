@@ -310,7 +310,7 @@
                 </div>
                 <div class="flex items-center space-x-3">
                     <button onclick="resetSystemData()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-sm flex items-center">
-                        <i class="fa-solid fa-rotate text-sm mr-1.5"></i> ล้างข้อมูลทั้งหมด (Reset System)
+                        <i class="fa-solid fa-rotate text-sm mr-1.5"></i> ล้างข้อมูลเคสทั้งหมด (Reset Cases)
                     </button>
                     <span class="bg-amber-500/20 text-amber-300 text-xs px-3 py-1.5 rounded-full border border-amber-500/30 font-medium">Admin Mode Active</span>
                 </div>
@@ -499,38 +499,172 @@
                         patrolCases.push({ firebaseId: key, ...data[key] });
                     });
                 }
-                // อัปเดต UI เมื่อข้อมูลเปลี่ยน
                 updateDashboardStats();
                 renderAdminReviewTable();
                 generateLiveReport();
             });
 
-            // ฟังข้อมูล Departments
+            // ฟังข้อมูล Departments จาก Firebase
             db.ref('departments').on('value', (snapshot) => {
                 const data = snapshot.val();
-                departments = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+                departments = [];
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        departments.push({ id: key, ...data[key] });
+                    });
+                }
                 renderDeptOptions();
                 renderAdminDeptTable();
             });
 
-            // ฟังข้อมูล Categories
+            // ฟังข้อมูล Categories จาก Firebase
             db.ref('categories').on('value', (snapshot) => {
                 const data = snapshot.val();
-                categories = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+                categories = [];
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        categories.push({ id: key, ...data[key] });
+                    });
+                }
                 renderCategoryOptions();
                 renderAdminCatTable();
             });
         }
 
-        // 3. ฟังก์ชันล้างข้อมูลใน FIREBASE แบบเด็ดขาด
+        // 3. จัดการแผนก (เพิ่ม/แก้ไข/ลบ ใน Firebase)
+        function openDeptModal(id) {
+            document.getElementById('deptModal').classList.remove('hidden');
+            if (id) {
+                const item = departments.find(d => d.id == id);
+                document.getElementById('deptModalTitle').innerText = 'แก้ไขข้อมูลแผนก';
+                document.getElementById('deptEditId').value = item.id;
+                document.getElementById('deptInputName').value = item.name || '';
+                document.getElementById('deptInputPic').value = item.pic || '';
+                document.getElementById('deptInputLine').value = item.lineId || '';
+            } else {
+                document.getElementById('deptModalTitle').innerText = 'เพิ่มแผนกใหม่';
+                document.getElementById('deptEditId').value = '';
+                document.getElementById('deptInputName').value = '';
+                document.getElementById('deptInputPic').value = '';
+                document.getElementById('deptInputLine').value = '';
+            }
+        }
+
+        function closeDeptModal() { 
+            document.getElementById('deptModal').classList.add('hidden'); 
+        }
+
+        function saveDeptData() {
+            const id = document.getElementById('deptEditId').value;
+            const name = document.getElementById('deptInputName').value.trim();
+            const pic = document.getElementById('deptInputPic').value.trim();
+            const line = document.getElementById('deptInputLine').value.trim();
+
+            if (!name || !pic) { 
+                alert('กรุณากรอกชื่อแผนกและผู้รับผิดชอบให้ครบถ้วน'); 
+                return; 
+            }
+
+            const deptPayload = { name: name, pic: pic, lineId: line };
+
+            if (id) {
+                // แก้ไขข้อมูลเดิมใน Firebase
+                db.ref('departments/' + id).update(deptPayload)
+                    .then(() => {
+                        alert('อัปเดตข้อมูลแผนกเรียบร้อยแล้ว!');
+                        closeDeptModal();
+                    })
+                    .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
+            } else {
+                // เพิ่มแผนกใหม่ลง Firebase
+                db.ref('departments').push(deptPayload)
+                    .then(() => {
+                        alert('เพิ่มแผนกใหม่เรียบร้อยแล้ว!');
+                        closeDeptModal();
+                    })
+                    .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
+            }
+        }
+
+        function deleteDept(id) {
+            if (confirm('คุณต้องการลบแผนกนี้ใช่หรือไม่?')) {
+                db.ref('departments/' + id).remove()
+                    .then(() => alert('ลบแผนกเรียบร้อยแล้ว'))
+                    .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
+            }
+        }
+
+        // 4. จัดการหมวดหมู่ (เพิ่ม/แก้ไข/ลบ ใน Firebase)
+        function openCatModal(id) {
+            document.getElementById('catModal').classList.remove('hidden');
+            if (id) {
+                const item = categories.find(c => c.id == id);
+                document.getElementById('catModalTitle').innerText = 'แก้ไขหมวดหมู่สิ่งแวดล้อม';
+                document.getElementById('catEditId').value = item.id;
+                document.getElementById('catInputCode').value = item.code || '';
+                document.getElementById('catInputName').value = item.name || '';
+                document.getElementById('catInputDesc').value = item.desc || '';
+            } else {
+                document.getElementById('catModalTitle').innerText = 'เพิ่มหมวดหมู่สิ่งแวดล้อมใหม่';
+                document.getElementById('catEditId').value = '';
+                document.getElementById('catInputCode').value = 'ENV-0' + (categories.length + 1);
+                document.getElementById('catInputName').value = '';
+                document.getElementById('catInputDesc').value = '';
+            }
+        }
+
+        function closeCatModal() { 
+            document.getElementById('catModal').classList.add('hidden'); 
+        }
+
+        function saveCatData() {
+            const id = document.getElementById('catEditId').value;
+            const code = document.getElementById('catInputCode').value.trim();
+            const name = document.getElementById('catInputName').value.trim();
+            const desc = document.getElementById('catInputDesc').value.trim();
+
+            if (!name) { 
+                alert('กรุณากรอกชื่อหมวดหมู่'); 
+                return; 
+            }
+
+            const catPayload = { code: code, name: name, desc: desc };
+
+            if (id) {
+                // แก้ไขหมวดหมู่เดิมใน Firebase
+                db.ref('categories/' + id).update(catPayload)
+                    .then(() => {
+                        alert('อัปเดตหมวดหมู่เรียบร้อยแล้ว!');
+                        closeCatModal();
+                    })
+                    .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
+            } else {
+                // เพิ่มหมวดหมู่ใหม่ลง Firebase
+                db.ref('categories').push(catPayload)
+                    .then(() => {
+                        alert('เพิ่มหมวดหมู่ใหม่เรียบร้อยแล้ว!');
+                        closeCatModal();
+                    })
+                    .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
+            }
+        }
+
+        function deleteCat(id) {
+            if (confirm('คุณต้องการลบหมวดหมู่นี้ใช่หรือไม่?')) {
+                db.ref('categories/' + id).remove()
+                    .then(() => alert('ลบหมวดหมู่เรียบร้อยแล้ว'))
+                    .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
+            }
+        }
+
+        // 5. ฟังก์ชันล้างข้อมูลใน FIREBASE
         function resetSystemData() {
             const code = prompt("⚠️ เตือนภัย! การล้างข้อมูลจะทำการลบเคสทั้งหมดออกจากฐานข้อมูล Firebase อย่างถาวร\nกรุณากรอกรหัสยืนยัน '9999' เพื่อยืนยัน:");
             
             if (code === "9999") {
-                // สั่งลบ Node 'patrolCases' ใน Firebase Realtime Database
                 db.ref('patrolCases').remove()
                     .then(() => {
-                        alert("ล้างข้อมูลทั้งหมดใน Firebase เรียบร้อยแล้ว! ข้อมูลจะไม่กลับมาเมื่อ Refresh");
+                        alert("ล้างข้อมูลเคสทั้งหมดใน Firebase เรียบร้อยแล้ว!");
                     })
                     .catch(err => {
                         alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + err.message);
@@ -540,7 +674,7 @@
             }
         }
 
-        // 4. บันทึกเคสใหม่ลง Firebase
+        // 6. บันทึกเคสใหม่ลง Firebase
         function submitPatrolForm(e) {
             e.preventDefault();
             const loc = document.getElementById('location').value;
@@ -576,7 +710,7 @@
                 .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
         }
 
-        // 5. สลับหน้า Admin / User
+        // 7. สลับหน้า Admin / User
         function switchTab(view) {
             if (view === 'user') {
                 document.getElementById('userView').classList.remove('hidden');
@@ -642,7 +776,7 @@
             }
         }
 
-        // 6. อัปเดต UI และ Stats แบบ Real-time
+        // 8. อัปเดต UI และ Stats แบบ Real-time
         function updateDashboardStats() {
             const total = patrolCases.length;
             const resolved = patrolCases.filter(c => c.status === 'Resolved').length;
@@ -696,7 +830,7 @@
             const display = document.getElementById('picDisplay');
             const found = departments.find(d => d.id == deptId);
             if (found) {
-                display.value = `${found.pic} (LINE: ${found.lineId})`;
+                display.value = `${found.pic} (LINE: ${found.lineId || '-'})`;
             } else {
                 display.value = 'กรุณาเลือกแผนก';
             }
@@ -706,12 +840,16 @@
             const tbody = document.getElementById('adminDeptTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
+            if (departments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">ยังไม่มีข้อมูลแผนก กรุณากดเพิ่มแผนกใหม่</td></tr>';
+                return;
+            }
             departments.forEach((d) => {
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50">
                         <td class="p-3 font-medium text-slate-800">${d.name}</td>
                         <td class="p-3 text-slate-700">${d.pic}</td>
-                        <td class="p-3"><span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-mono px-2.5 py-1 rounded-full"><i class="fa-brands fa-line mr-1"></i>${d.lineId}</span></td>
+                        <td class="p-3"><span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-mono px-2.5 py-1 rounded-full"><i class="fa-brands fa-line mr-1"></i>${d.lineId || '-'}</span></td>
                         <td class="p-3 text-center">
                             <button onclick="openDeptModal('${d.id}')" class="text-indigo-600 hover:text-indigo-800 mr-3 text-xs font-semibold"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
                             <button onclick="deleteDept('${d.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold"><i class="fa-solid fa-trash"></i> ลบ</button>
@@ -725,12 +863,16 @@
             const tbody = document.getElementById('adminCatTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
+            if (categories.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">ยังไม่มีข้อมูลหมวดหมู่ กรุณากดเพิ่มหมวดหมู่ใหม่</td></tr>';
+                return;
+            }
             categories.forEach((c) => {
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-mono text-xs font-bold text-slate-600">${c.code}</td>
+                        <td class="p-3 font-mono text-xs font-bold text-slate-600">${c.code || '-'}</td>
                         <td class="p-3 font-medium text-slate-800">${c.name}</td>
-                        <td class="p-3 text-slate-500 text-xs">${c.desc}</td>
+                        <td class="p-3 text-slate-500 text-xs">${c.desc || '-'}</td>
                         <td class="p-3 text-center">
                             <button onclick="openCatModal('${c.id}')" class="text-indigo-600 hover:text-indigo-800 mr-3 text-xs font-semibold"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
                             <button onclick="deleteCat('${c.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold"><i class="fa-solid fa-trash"></i> ลบ</button>
