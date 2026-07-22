@@ -144,7 +144,7 @@
                         <h2 class="text-xl font-bold text-slate-800 flex items-center">
                             <i class="fa-solid fa-pen-to-square text-emerald-600 mr-2"></i> แบบฟอร์มแจ้งพบปัญหาสิ่งแวดล้อม (Env Patrol Form)
                         </h2>
-                        <p class="text-xs text-slate-500 mt-1">กรอกข้อมูลและแนบรูปถ่าย 2 รูป เพื่อส่งลิงก์แจ้งเตือนให้ผู้รับผิดชอบแก้ไขทาง LINE</p>
+                        <p class="text-xs text-slate-500 mt-1">กรอกข้อมูลและกดถ่ายรูปจากกล้อง 2 รูป เพื่อส่งลิงก์แจ้งเตือนให้ผู้รับผิดชอบแก้ไขทาง LINE</p>
                     </div>
                 </div>
 
@@ -186,21 +186,24 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">แนบรูปถ่ายปัญหา (สูงสุด 2 รูป)</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">ถ่ายรูปปัญหาจากกล้องโดยตรง (สูงสุด 2 รูป)</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Input 1: เปิดกล้องถ่ายภาพโดยตรง -->
                             <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('pImg1').click()">
-                                <input type="file" id="pImg1" accept="image/*" class="hidden" onchange="previewImg(this, 'prev1', 'place1')">
+                                <input type="file" id="pImg1" accept="image/*" capture="environment" class="hidden" onchange="previewImg(this, 'prev1', 'place1')">
                                 <div id="place1">
                                     <i class="fa-solid fa-camera text-2xl text-emerald-600 mb-1"></i>
-                                    <p class="text-xs font-semibold text-slate-700">รูปที่ 1: มุมกว้าง / สภาพแวดล้อมโดยรวม</p>
+                                    <p class="text-xs font-semibold text-slate-700">กดถ่ายรูปที่ 1: มุมกว้าง / สภาพแวดล้อม</p>
                                 </div>
                                 <img id="prev1" class="hidden w-full h-32 object-cover rounded-lg shadow-sm">
                             </div>
+
+                            <!-- Input 2: เปิดกล้องถ่ายภาพโดยตรง -->
                             <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('pImg2').click()">
-                                <input type="file" id="pImg2" accept="image/*" class="hidden" onchange="previewImg(this, 'prev2', 'place2')">
+                                <input type="file" id="pImg2" accept="image/*" capture="environment" class="hidden" onchange="previewImg(this, 'prev2', 'place2')">
                                 <div id="place2">
-                                    <i class="fa-solid fa-magnifying-glass-plus text-2xl text-emerald-600 mb-1"></i>
-                                    <p class="text-xs font-semibold text-slate-700">รูปที่ 2: มุมเจาะจง / จุดความผิดปกติ</p>
+                                    <i class="fa-solid fa-camera text-2xl text-emerald-600 mb-1"></i>
+                                    <p class="text-xs font-semibold text-slate-700">กดถ่ายรูปที่ 2: มุมเจาะจง / จุดความผิดปกติ</p>
                                 </div>
                                 <img id="prev2" class="hidden w-full h-32 object-cover rounded-lg shadow-sm">
                             </div>
@@ -568,7 +571,6 @@
             const deptPayload = { name: name, pic: pic, lineId: line };
 
             if (id) {
-                // แก้ไขข้อมูลเดิมใน Firebase
                 db.ref('departments/' + id).update(deptPayload)
                     .then(() => {
                         alert('อัปเดตข้อมูลแผนกเรียบร้อยแล้ว!');
@@ -576,7 +578,6 @@
                     })
                     .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
             } else {
-                // เพิ่มแผนกใหม่ลง Firebase
                 db.ref('departments').push(deptPayload)
                     .then(() => {
                         alert('เพิ่มแผนกใหม่เรียบร้อยแล้ว!');
@@ -631,7 +632,6 @@
             const catPayload = { code: code, name: name, desc: desc };
 
             if (id) {
-                // แก้ไขหมวดหมู่เดิมใน Firebase
                 db.ref('categories/' + id).update(catPayload)
                     .then(() => {
                         alert('อัปเดตหมวดหมู่เรียบร้อยแล้ว!');
@@ -639,7 +639,6 @@
                     })
                     .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
             } else {
-                // เพิ่มหมวดหมู่ใหม่ลง Firebase
                 db.ref('categories').push(catPayload)
                     .then(() => {
                         alert('เพิ่มหมวดหมู่ใหม่เรียบร้อยแล้ว!');
