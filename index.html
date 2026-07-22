@@ -23,6 +23,9 @@
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
+            body { background: white !important; padding-bottom: 0 !important; }
+            .shadow-md, .shadow-lg, .shadow-2xl { box-shadow: none !important; }
+            .border { border-color: #cbd5e1 !important; }
         }
     </style>
 </head>
@@ -248,6 +251,11 @@
                                 <option value="05">พฤษภาคม</option>
                                 <option value="06">มิถุนายน</option>
                                 <option value="07" selected>กรกฎาคม</option>
+                                <option value="08">สิงหาคม</option>
+                                <option value="09">กันยายน</option>
+                                <option value="10">ตารางกุมภาพันธ์</option>
+                                <option value="11">พฤศจิกายน</option>
+                                <option value="12">ธันวาคม</option>
                             </select>
                         </div>
                         <div>
@@ -279,15 +287,17 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-xs">
                             <thead>
-                                <tr class="bg-slate-100 text-slate-700 uppercase font-bold border-b">
-                                    <th class="p-2.5">รหัสเคส</th>
-                                    <th class="p-2.5">วันที่</th>
-                                    <th class="p-2.5">พื้นที่พบปัญหา</th>
-                                    <th class="p-2.5">แผนกรับผิดชอบ</th>
-                                    <th class="p-2.5">ผู้รับผิดชอบ</th>
-                                    <th class="p-2.5">หมวดหมู่</th>
-                                    <th class="p-2.5">ความรุนแรง</th>
-                                    <th class="p-2.5 text-center">สถานะ</th>
+                                <tr class="bg-slate-800 text-white uppercase font-semibold text-[11px] tracking-wider border-b">
+                                    <th class="p-3">รหัสเคส</th>
+                                    <th class="p-3">วันที่</th>
+                                    <th class="p-3">พื้นที่พบปัญหา</th>
+                                    <th class="p-3">แผนกรับผิดชอบ</th>
+                                    <th class="p-3">ผู้รับผิดชอบ</th>
+                                    <th class="p-3">หมวดหมู่</th>
+                                    <th class="p-3 max-w-xs">รายละเอียดสิ่งที่พบความผิดปกติ</th>
+                                    <th class="p-3 text-center">รูปถ่ายปัญหา (2 รูป)</th>
+                                    <th class="p-3">ความรุนแรง</th>
+                                    <th class="p-3 text-center">สถานะ</th>
                                 </tr>
                             </thead>
                             <tbody id="reportTableBody" class="divide-y divide-slate-200">
@@ -486,6 +496,10 @@
 
         let chart1, chart2, chart3, chart4;
 
+        // ตัวแปรเก็บภาพ Base64 ชั่วคราว
+        let tempImg1 = "";
+        let tempImg2 = "";
+
         // 2. Load Realtime Data on Start
         document.addEventListener("DOMContentLoaded", function() {
             initDashboardCharts();
@@ -518,7 +532,7 @@
                 }
                 renderDeptOptions();
                 renderAdminDeptTable();
-                updateDashboardStats(); // อัปเดตรายชื่อแผนกในกราฟทันที
+                updateDashboardStats();
             });
 
             // ฟังข้อมูล Categories จาก Firebase
@@ -532,7 +546,7 @@
                 }
                 renderCategoryOptions();
                 renderAdminCatTable();
-                updateDashboardStats(); // อัปเดตหมวดหมู่ในกราฟทันที
+                updateDashboardStats();
             });
         }
 
@@ -675,7 +689,7 @@
             }
         }
 
-        // 6. บันทึกเคสใหม่ลง Firebase
+        // 6. บันทึกเคสใหม่ลง Firebase (Auto Running Case ID: PATROL-2026-001)
         function submitPatrolForm(e) {
             e.preventDefault();
             const loc = document.getElementById('location').value;
@@ -686,7 +700,9 @@
             const sev = document.getElementById('severity').value;
             const desc = document.getElementById('description').value;
 
-            const caseIdNumber = 'PATROL-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
+            // รันเลขเคสเรียงลำดับ เช่น PATROL-2026-001
+            const nextSeq = String(patrolCases.length + 1).padStart(3, '0');
+            const caseIdNumber = `PATROL-2026-${nextSeq}`;
 
             const newCase = {
                 id: caseIdNumber,
@@ -698,6 +714,9 @@
                 pic: dept ? dept.pic : '-',
                 catName: cat ? cat.name : '-',
                 severity: sev,
+                description: desc,
+                img1: tempImg1 || '',
+                img2: tempImg2 || '',
                 status: 'Pending',
                 fixDesc: ''
             };
@@ -707,6 +726,12 @@
                     alert(`บันทึกข้อมูลสำเร็จ!\nรหัสเคส: ${newCase.id}`);
                     document.getElementById('patrolForm').reset();
                     document.getElementById('picDisplay').value = 'กรุณาเลือกแผนก';
+                    // รีเซ็ตการแสดงผลรูปตัวอย่าง
+                    tempImg1 = ""; tempImg2 = "";
+                    document.getElementById('prev1').classList.add('hidden');
+                    document.getElementById('place1').classList.remove('hidden');
+                    document.getElementById('prev2').classList.add('hidden');
+                    document.getElementById('place2').classList.remove('hidden');
                 })
                 .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
         }
@@ -796,7 +821,7 @@
         function updateChartsData() {
             if (!chart1 || !chart2 || !chart3 || !chart4) return;
             
-            // ------------------ Chart 1: รายเดือน (เดือน 1-12) ------------------
+            // Chart 1: รายเดือน
             const monthLabels = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
             const monthlyResolved = new Array(12).fill(0);
             const monthlyPending = new Array(12).fill(0);
@@ -816,7 +841,7 @@
             chart1.data.datasets[1].data = monthlyPending;
             chart1.update();
 
-            // ------------------ Chart 2: แยกตามแผนก ------------------
+            // Chart 2: แยกตามแผนก
             const deptLabels = departments.length > 0 ? departments.map(d => d.name) : ['ยังไม่มีข้อมูลแผนก'];
             const deptResolved = new Array(deptLabels.length).fill(0);
             const deptPending = new Array(deptLabels.length).fill(0);
@@ -832,7 +857,7 @@
             chart2.data.datasets[1].data = deptPending;
             chart2.update();
 
-            // ------------------ Chart 3: แยกตามหมวดหมู่ ------------------
+            // Chart 3: แยกตามหมวดหมู่
             const catLabels = categories.length > 0 ? categories.map(c => c.name) : ['ยังไม่มีข้อมูลหมวดหมู่'];
             const catResolved = new Array(catLabels.length).fill(0);
             const catPending = new Array(catLabels.length).fill(0);
@@ -848,7 +873,7 @@
             chart3.data.datasets[1].data = catPending;
             chart3.update();
 
-            // ------------------ Chart 4: แยกตามระดับความรุนแรง ------------------
+            // Chart 4: แยกตามระดับความรุนแรง
             const sevKeys = ['Low', 'Medium', 'High', 'Critical'];
             const sevResolved = [0, 0, 0, 0];
             const sevPending = [0, 0, 0, 0];
@@ -993,44 +1018,79 @@
             }
         }
 
+        // 9. ระบบสร้างรายงานสด (เพิ่มรายละเอียดความผิดปกติ + รูปถ่าย 2 รูป)
         function generateLiveReport() {
             const tbody = document.getElementById('reportTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (patrolCases.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-slate-400">ไม่พบข้อมูลในระบบ (กรุณากรอกแบบฟอร์มเพื่อเริ่มบันทึกข้อมูล)</td></tr>';
+            const selectedDept = document.getElementById('reportDeptSelect') ? document.getElementById('reportDeptSelect').value : 'all';
+            const selectedMonth = document.getElementById('reportMonthSelect') ? document.getElementById('reportMonthSelect').value : 'all';
+            const selectedStatus = document.getElementById('reportStatusSelect') ? document.getElementById('reportStatusSelect').value : 'all';
+
+            // กรองข้อมูลตาม Filter
+            let filteredCases = patrolCases.filter(c => {
+                let matchDept = (selectedDept === 'all') || (c.deptId == selectedDept);
+                let matchMonth = (selectedMonth === 'all') || (c.month === selectedMonth);
+                let matchStatus = (selectedStatus === 'all') || (c.status === selectedStatus);
+                return matchDept && matchMonth && matchStatus;
+            });
+
+            if (filteredCases.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="p-6 text-center text-slate-400 font-medium">ไม่พบข้อมูลตรงตามเงื่อนไขที่เลือก</td></tr>';
             } else {
-                patrolCases.forEach(c => {
+                filteredCases.forEach((c, idx) => {
                     let statusBadge = c.status === 'Resolved' 
-                        ? '<span class="bg-emerald-100 text-emerald-800 text-[11px] px-2 py-0.5 rounded-full font-medium">Resolved</span>'
-                        : '<span class="bg-amber-100 text-amber-800 text-[11px] px-2 py-0.5 rounded-full font-medium">Pending</span>';
+                        ? '<span class="bg-emerald-100 text-emerald-800 text-[11px] px-2.5 py-1 rounded-full font-bold">Resolved</span>'
+                        : '<span class="bg-amber-100 text-amber-800 text-[11px] px-2.5 py-1 rounded-full font-bold">Pending</span>';
+
+                    // แสดงรูปถ่ายปัญหา (สูงสุด 2 รูป)
+                    let imgHtml = '<div class="flex justify-center space-x-1.5">';
+                    if (c.img1) {
+                        imgHtml += `<img src="${c.img1}" class="w-10 h-10 object-cover rounded border border-slate-300 shadow-sm cursor-pointer hover:scale-150 transition" onclick="window.open('${c.img1}')" title="กดดูรูปใหญ่">`;
+                    }
+                    if (c.img2) {
+                        imgHtml += `<img src="${c.img2}" class="w-10 h-10 object-cover rounded border border-slate-300 shadow-sm cursor-pointer hover:scale-150 transition" onclick="window.open('${c.img2}')" title="กดดูรูปใหญ่">`;
+                    }
+                    if (!c.img1 && !c.img2) {
+                        imgHtml += '<span class="text-slate-400 text-[10px]">- ไม่มีรูป -</span>';
+                    }
+                    imgHtml += '</div>';
+
+                    let rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
 
                     tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50">
-                            <td class="p-2.5 font-mono font-bold text-slate-700">${c.id}</td>
-                            <td class="p-2.5 text-slate-500">${c.date}</td>
-                            <td class="p-2.5 font-medium text-slate-800">${c.location}</td>
-                            <td class="p-2.5">${c.deptName}</td>
-                            <td class="p-2.5">${c.pic}</td>
-                            <td class="p-2.5">${c.catName}</td>
-                            <td class="p-2.5"><span class="bg-slate-100 px-2 py-0.5 rounded text-[11px] font-semibold">${c.severity}</span></td>
-                            <td class="p-2.5 text-center">${statusBadge}</td>
+                        <tr class="${rowBg} hover:bg-slate-100/80 transition">
+                            <td class="p-3 font-mono font-bold text-slate-800">${c.id}</td>
+                            <td class="p-3 text-slate-600 font-medium">${c.date || '-'}</td>
+                            <td class="p-3 font-semibold text-slate-800">${c.location || '-'}</td>
+                            <td class="p-3 text-slate-700">${c.deptName || '-'}</td>
+                            <td class="p-3 text-slate-700">${c.pic || '-'}</td>
+                            <td class="p-3 text-slate-700 font-medium">${c.catName || '-'}</td>
+                            <td class="p-3 text-slate-700 max-w-xs leading-snug">${c.description || '-'}</td>
+                            <td class="p-3 text-center">${imgHtml}</td>
+                            <td class="p-3"><span class="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-[11px] font-semibold">${c.severity || 'Medium'}</span></td>
+                            <td class="p-3 text-center">${statusBadge}</td>
                         </tr>
                     `;
                 });
             }
-            document.getElementById('reportHeaderMeta').innerText = `พบข้อมูลทั้งหมด ${patrolCases.length} รายการ`;
+            document.getElementById('reportHeaderMeta').innerText = `พบข้อมูลทั้งหมด ${filteredCases.length} รายการ`;
         }
 
+        // Preview & Convert Image to Base64
         function previewImg(input, prevId, placeId) {
             const file = input.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    document.getElementById(prevId).src = e.target.result;
+                    const base64Str = e.target.result;
+                    document.getElementById(prevId).src = base64Str;
                     document.getElementById(prevId).classList.remove('hidden');
                     document.getElementById(placeId).classList.add('hidden');
+
+                    if (prevId === 'prev1') tempImg1 = base64Str;
+                    if (prevId === 'prev2') tempImg2 = base64Str;
                 }
                 reader.readAsDataURL(file);
             }
