@@ -562,16 +562,23 @@ const firebaseConfig = {
         }
 
         // ACTUAL RESET SYSTEM WITH CODE '9999'
-        function resetSystemData() {
-            const code = prompt("⚠️ เตือนภัย! การล้างข้อมูลจะทำการลบเคสและสถิติทั้งหมด\nกรุณากรอกรหัสยืนยัน '9999' เพื่อล้างข้อมูล:");
-            if (code === "9999") {
+function resetSystemData() {
+    const code = prompt("⚠️ เตือนภัย! การล้างข้อมูลจะทำการลบเคส แผนก และหมวดหมู่ทั้งหมดใน Firebase\nกรุณากรอกรหัสยืนยัน '9999' เพื่อล้างข้อมูล:");
+    
+    if (code === "9999") {
+        // สั่งลบข้อมูลเคสทั้งหมดใน Firebase Realtime Database
+        db.ref('patrolCases').remove()
+            .then(() => {
+                // ล้างค่าตัวแปรในเครื่อง
                 patrolCases = [];
                 
+                // รีเซ็ตการแสดงผลสถิติบนหน้าจอ
                 document.getElementById('statTotal').innerText = '0';
                 document.getElementById('statResolved').innerText = '0';
                 document.getElementById('statPending').innerText = '0';
                 document.getElementById('statRate').innerText = '0.0%';
 
+                // รีเซ็ตกราฟ Dashboard
                 [chart1, chart2, chart3, chart4].forEach(c => {
                     if (c) {
                         c.data.datasets.forEach(ds => ds.data = ds.data.map(() => 0));
@@ -581,12 +588,15 @@ const firebaseConfig = {
 
                 renderAdminReviewTable();
                 generateLiveReport();
-                alert("ล้างข้อมูลทั้งหมดในระบบเรียบร้อยแล้ว!");
-            } else {
-                alert("รหัสยืนยันไม่ถูกต้อง! ยกเลิกการล้างข้อมูล");
-            }
-        }
-
+                alert("ล้างข้อมูลใน Firebase และบนหน้าจอเรียบร้อยแล้ว! (ลอง Refresh หน้าเว็บทดสอบได้เลยครับ)");
+            })
+            .catch(err => {
+                alert("เกิดข้อผิดพลาดในการลบข้อมูลจาก Firebase: " + err.message);
+            });
+    } else {
+        alert("รหัสยืนยันไม่ถูกต้อง! ยกเลิกการล้างข้อมูล");
+    }
+}
         function switchAdminSubTab(sub) {
             const panels = ['Review', 'Dept', 'Cat'];
             panels.forEach(p => {
