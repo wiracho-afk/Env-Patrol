@@ -297,7 +297,7 @@
                                     <th class="p-3 max-w-xs">รายละเอียดสิ่งที่พบความผิดปกติ</th>
                                     <th class="p-3 text-center">รูปถ่ายปัญหา (2 รูป)</th>
                                     <th class="p-3">ความรุนแรง</th>
-                                    <th class="p-3 text-center">สถานะ</th>
+                                    <th class="p-3 text-center">สถานะ / แก้ไขทาง LINE</th>
                                 </tr>
                             </thead>
                             <tbody id="reportTableBody" class="divide-y divide-slate-200">
@@ -332,7 +332,7 @@
             <!-- ADMIN TAB MENU -->
             <div class="flex border-b border-slate-300 space-x-4">
                 <button onclick="switchAdminSubTab('review')" id="adminSubTabReview" class="pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center">
-                    <i class="fa-solid fa-list-check mr-2"></i> 1. ตรวจสอบงานแก้ไข
+                    <i class="fa-solid fa-list-check mr-2"></i> 1. ตรวจสอบงานแก้ไข (Approve Fixes)
                 </button>
                 <button onclick="switchAdminSubTab('dept')" id="adminSubTabDept" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center">
                     <i class="fa-solid fa-building mr-2"></i> 2. แผนก & ผู้รับผิดชอบ & LINE
@@ -457,6 +457,94 @@
 
     </div>
 
+    <!-- MODAL FOR LINE LINK NOTIFICATION -->
+    <div id="lineLinkModal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-5 text-center">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl">
+                <i class="fa-brands fa-line"></i>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-slate-800">บันทึกข้อมูลเรียบร้อยแล้ว!</h3>
+                <p class="text-xs text-slate-500 mt-1">กรุณาคัดลอกลิงก์แก้ไขงานด้านล่างนี้ ส่งให้ผู้รับผิดชอบทาง LINE</p>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-left space-y-2">
+                <p class="text-xs font-bold text-slate-700" id="lineLinkCaseId">รหัสเคส: -</p>
+                <p class="text-xs text-slate-600" id="lineLinkPic">ผู้รับผิดชอบ: -</p>
+                <div class="flex items-center space-x-2 pt-1">
+                    <input type="text" id="generatedFixUrl" readonly class="w-full text-xs font-mono bg-white border px-3 py-2 rounded-lg outline-none text-slate-600">
+                    <button onclick="copyFixLinkUrl()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shrink-0 flex items-center">
+                        <i class="fa-solid fa-copy mr-1"></i> คัดลอก
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-center space-x-3 pt-2">
+                <button onclick="closeLineLinkModal()" class="bg-slate-700 hover:bg-slate-800 text-white px-6 py-2 rounded-lg text-xs font-medium transition">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FOR PERSON IN CHARGE FIX SUBMISSION -->
+    <div id="personFixModal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+            <div class="border-b pb-3 flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-base" id="fixModalCaseTitle">รายงานผลการแก้ไขปัญหาสิ่งแวดล้อม</h3>
+                    <p class="text-xs text-emerald-600 font-semibold mt-0.5" id="fixModalDeptPic">-</p>
+                </div>
+                <button onclick="closePersonFixModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-1">
+                <p class="font-semibold text-amber-900">รายละเอียดสภาพปัญหาก่อนแก้ไข:</p>
+                <p class="text-slate-700" id="fixModalProblemDesc">-</p>
+                <p class="text-slate-500 font-mono text-[11px]" id="fixModalLocation">-</p>
+            </div>
+
+            <form onsubmit="submitFixFromLINE(event)" class="space-y-4">
+                <input type="hidden" id="fixFirebaseId">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">รายละเอียดการแก้ไขปัญหา / การป้องกันการเกิดซ้ำ <span class="text-red-500">*</span></label>
+                    <textarea id="fixDescInput" rows="3" required placeholder="อธิบายมาตรการแก้ไข หรือการดำเนินการที่ได้ทำไปแล้ว..." class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">ถ่ายรูปผลการแก้ไขจากกล้องโดยตรง (สูงสุด 2 รูป) <span class="text-red-500">*</span></label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="border-2 border-dashed border-slate-300 rounded-xl p-3 text-center bg-slate-50 hover:bg-slate-100 cursor-pointer" onclick="document.getElementById('fixImgInput1').click()">
+                            <input type="file" id="fixImgInput1" accept="image/*" capture="environment" class="hidden" onchange="previewImg(this, 'fixPrev1', 'fixPlace1')">
+                            <div id="fixPlace1">
+                                <i class="fa-solid fa-camera text-xl text-emerald-600 mb-1"></i>
+                                <p class="text-[10px] font-semibold text-slate-600">รูปหลังแก้ไข 1</p>
+                            </div>
+                            <img id="fixPrev1" class="hidden w-full h-24 object-cover rounded-lg shadow-sm">
+                        </div>
+
+                        <div class="border-2 border-dashed border-slate-300 rounded-xl p-3 text-center bg-slate-50 hover:bg-slate-100 cursor-pointer" onclick="document.getElementById('fixImgInput2').click()">
+                            <input type="file" id="fixImgInput2" accept="image/*" capture="environment" class="hidden" onchange="previewImg(this, 'fixPrev2', 'fixPlace2')">
+                            <div id="fixPlace2">
+                                <i class="fa-solid fa-camera text-xl text-emerald-600 mb-1"></i>
+                                <p class="text-[10px] font-semibold text-slate-600">รูปหลังแก้ไข 2</p>
+                            </div>
+                            <img id="fixPrev2" class="hidden w-full h-24 object-cover rounded-lg shadow-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closePersonFixModal()" class="px-4 py-2 border rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-md flex items-center space-x-1.5">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>ส่งผลการแก้ไขเข้า Admin ตรวจสอบ</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL FOR IMAGE PREVIEW -->
     <div id="imagePreviewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="closeImageModal()">
         <div class="relative max-w-3xl w-full flex flex-col items-center" onclick="event.stopPropagation()">
@@ -568,18 +656,27 @@
 
         let chart1, chart2, chart3, chart4;
 
-        // ตัวแปรเก็บภาพ Base64 ชั่วคราว
         let tempImg1 = "";
         let tempImg2 = "";
+        let tempFixImg1 = "";
+        let tempFixImg2 = "";
 
         // 2. Load Realtime Data on Start
         document.addEventListener("DOMContentLoaded", function() {
             initDashboardCharts();
             listenToRealtimeData();
+            checkUrlForFixAction();
         });
 
+        function checkUrlForFixAction() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fixCaseId = urlParams.get('fixCaseId');
+            if (fixCaseId) {
+                setTimeout(() => openPersonFixModalByFirebaseId(fixCaseId), 1000);
+            }
+        }
+
         function listenToRealtimeData() {
-            // ฟังข้อมูล Patrol Cases จาก Firebase
             db.ref('patrolCases').on('value', (snapshot) => {
                 const data = snapshot.val();
                 patrolCases = [];
@@ -594,7 +691,6 @@
                 generateLiveReport();
             });
 
-            // ฟังข้อมูล Departments จาก Firebase
             db.ref('departments').on('value', (snapshot) => {
                 const data = snapshot.val();
                 departments = [];
@@ -608,7 +704,6 @@
                 updateDashboardStats();
             });
 
-            // ฟังข้อมูล Categories จาก Firebase
             db.ref('categories').on('value', (snapshot) => {
                 const data = snapshot.val();
                 categories = [];
@@ -736,7 +831,7 @@
             }
         }
 
-        // 6. บันทึกเคสใหม่ลง Firebase (Auto Running Case ID: PATROL-2026-001)
+        // 6. บันทึกเคสใหม่ลง Firebase & สร้างลิงก์ส่งทาง LINE ผู้รับผิดชอบ
         function submitPatrolForm(e) {
             e.preventDefault();
             const loc = document.getElementById('location').value;
@@ -764,12 +859,24 @@
                 img1: tempImg1 || '',
                 img2: tempImg2 || '',
                 status: 'Pending',
-                fixDesc: ''
+                fixDesc: '',
+                fixImg1: '',
+                fixImg2: ''
             };
 
-            db.ref('patrolCases').push(newCase)
+            const newRef = db.ref('patrolCases').push();
+            newRef.set(newCase)
                 .then(() => {
-                    alert(`บันทึกข้อมูลสำเร็จ!\nรหัสเคส: ${newCase.id}`);
+                    const firebaseKey = newRef.key;
+                    const currentBaseUrl = window.location.href.split('?')[0];
+                    const fixUrl = `${currentBaseUrl}?fixCaseId=${firebaseKey}`;
+
+                    document.getElementById('lineLinkCaseId').innerText = `รหัสเคส: ${newCase.id} (${newCase.location})`;
+                    document.getElementById('lineLinkPic').innerText = `ผู้รับผิดชอบ: ${newCase.pic} (${newCase.deptName})`;
+                    document.getElementById('generatedFixUrl').value = fixUrl;
+
+                    document.getElementById('lineLinkModal').classList.remove('hidden');
+
                     document.getElementById('patrolForm').reset();
                     document.getElementById('picDisplay').value = 'กรุณาเลือกแผนก';
                     tempImg1 = ""; tempImg2 = "";
@@ -781,7 +888,56 @@
                 .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
         }
 
-        // 7. สลับหน้า Admin / User
+        function copyFixLinkUrl() {
+            const input = document.getElementById('generatedFixUrl');
+            input.select();
+            document.execCommand('copy');
+            alert('คัดลอกลิงก์เรียบร้อยแล้ว!\nคุณสามารถนำลิงก์นี้ไปวางส่งในแชท LINE ผู้รับผิดชอบได้ทันที');
+        }
+
+        function closeLineLinkModal() {
+            document.getElementById('lineLinkModal').classList.add('hidden');
+        }
+
+        // 7. ระบบผู้รับผิดชอบส่งผลการแก้ไขเข้า Admin
+        function openPersonFixModalByFirebaseId(firebaseId) {
+            const item = patrolCases.find(c => c.firebaseId === firebaseId);
+            if (!item) return;
+
+            document.getElementById('fixFirebaseId').value = firebaseId;
+            document.getElementById('fixModalCaseTitle').innerText = `รายงานผลการแก้ไขเคส [${item.id}]`;
+            document.getElementById('fixModalDeptPic').innerText = `แผนก ${item.deptName} - ผู้รับผิดชอบ: ${item.pic}`;
+            document.getElementById('fixModalProblemDesc').innerText = item.description || '-';
+            document.getElementById('fixModalLocation').innerText = `พื้นที่: ${item.location} | หมวดหมู่: ${item.catName}`;
+
+            document.getElementById('personFixModal').classList.remove('hidden');
+        }
+
+        function closePersonFixModal() {
+            document.getElementById('personFixModal').classList.add('hidden');
+        }
+
+        function submitFixFromLINE(e) {
+            e.preventDefault();
+            const fId = document.getElementById('fixFirebaseId').value;
+            const fixDesc = document.getElementById('fixDescInput').value.trim();
+
+            if (!fixDesc) {
+                alert('กรุณากรอกรายละเอียดผลการแก้ไขปัญหาก่อนส่ง');
+                return;
+            }
+
+            db.ref('patrolCases/' + fId).update({
+                fixDesc: fixDesc,
+                fixImg1: tempFixImg1 || '',
+                fixImg2: tempFixImg2 || ''
+            }).then(() => {
+                alert('ส่งผลการแก้ไขเข้าสู่ระบบเรียบร้อยแล้ว!\nรายการจะไปปรากฏในหน้า Admin -> "1. ตรวจสอบงานแก้ไข" เพื่อรอการอนุมัติ');
+                closePersonFixModal();
+            }).catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
+        }
+
+        // 8. สลับหน้า Admin / User
         function switchTab(view) {
             if (view === 'user') {
                 document.getElementById('userView').classList.remove('hidden');
@@ -850,7 +1006,7 @@
             }
         }
 
-        // 8. อัปเดต UI และ Stats แบบ Real-time
+        // 9. อัปเดต UI และ Stats แบบ Real-time
         function updateDashboardStats() {
             const total = patrolCases.length;
             const resolved = patrolCases.filter(c => c.status === 'Resolved').length;
@@ -1016,6 +1172,7 @@
             });
         }
 
+        // 10. แสดงรายการรออนุมัติการแก้ไขใน Admin (Subtab 1)
         function renderAdminReviewTable() {
             const tbody = document.getElementById('adminReviewTableBody');
             if (!tbody) return;
@@ -1028,6 +1185,11 @@
             }
 
             pendingWithFixes.forEach(c => {
+                let fixImgHtml = '<div class="flex space-x-1 mt-1">';
+                if(c.fixImg1) fixImgHtml += `<img src="${c.fixImg1}" class="w-10 h-10 object-cover rounded border cursor-pointer" onclick="openImageModal('${c.fixImg1}')">`;
+                if(c.fixImg2) fixImgHtml += `<img src="${c.fixImg2}" class="w-10 h-10 object-cover rounded border cursor-pointer" onclick="openImageModal('${c.fixImg2}')">`;
+                fixImgHtml += '</div>';
+
                 tbody.innerHTML += `
                     <tr>
                         <td class="p-3 font-mono text-xs font-bold text-slate-700">${c.id}</td>
@@ -1041,6 +1203,7 @@
                         </td>
                         <td class="p-3">
                             <p class="text-xs text-slate-700 mb-1 font-semibold">"${c.fixDesc}"</p>
+                            ${fixImgHtml}
                         </td>
                         <td class="p-3 text-center">
                             <div class="flex justify-center space-x-2">
@@ -1061,11 +1224,11 @@
             if (isApproved) {
                 db.ref('patrolCases/' + firebaseId).update({ status: 'Resolved' });
             } else {
-                db.ref('patrolCases/' + firebaseId).update({ fixDesc: '' });
+                db.ref('patrolCases/' + firebaseId).update({ fixDesc: '', fixImg1: '', fixImg2: '' });
             }
         }
 
-        // 9. แสดงรายการเคสทั้งหมดใน ADMIN (สำหรับลบ หรือ แก้ไข)
+        // 11. แสดงรายการเคสทั้งหมดใน ADMIN (Subtab 4)
         function renderAdminCasesTable() {
             const tbody = document.getElementById('adminCasesTableBody');
             if (!tbody) return;
@@ -1135,7 +1298,7 @@
             }
         }
 
-        // 10. ระบบสร้างรายงานสด (คลิกดู Preview รูปภาพเต็มจอ)
+        // 12. ระบบสร้างรายงานสด
         function generateLiveReport() {
             const tbody = document.getElementById('reportTableBody');
             if (!tbody) return;
@@ -1160,7 +1323,6 @@
                         ? '<span class="bg-emerald-100 text-emerald-800 text-[11px] px-2.5 py-1 rounded-full font-bold">Resolved</span>'
                         : '<span class="bg-amber-100 text-amber-800 text-[11px] px-2.5 py-1 rounded-full font-bold">Pending</span>';
 
-                    // แสดงรูปถ่ายปัญหา (คลิกขยายดู Preview)
                     let imgHtml = '<div class="flex justify-center space-x-1.5">';
                     if (c.img1) {
                         imgHtml += `<img src="${c.img1}" class="w-10 h-10 object-cover rounded border border-slate-300 shadow-sm cursor-pointer hover:scale-110 transition" onclick="openImageModal('${c.img1}')" title="กดเพื่อดูรูปขยาย">`;
@@ -1172,6 +1334,8 @@
                         imgHtml += '<span class="text-slate-400 text-[10px]">- ไม่มีรูป -</span>';
                     }
                     imgHtml += '</div>';
+
+                    let fixBtn = `<button onclick="openPersonFixModalByFirebaseId('${c.firebaseId}')" class="mt-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] px-2 py-0.5 rounded font-medium transition flex items-center justify-center mx-auto space-x-1"><i class="fa-brands fa-line"></i><span>ส่งแก้ไข</span></button>`;
 
                     let rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
 
@@ -1186,7 +1350,7 @@
                             <td class="p-3 text-slate-700 max-w-xs leading-snug">${c.description || '-'}</td>
                             <td class="p-3 text-center">${imgHtml}</td>
                             <td class="p-3"><span class="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-[11px] font-semibold">${c.severity || 'Medium'}</span></td>
-                            <td class="p-3 text-center">${statusBadge}</td>
+                            <td class="p-3 text-center">${statusBadge} ${c.status === 'Pending' ? fixBtn : ''}</td>
                         </tr>
                     `;
                 });
@@ -1194,7 +1358,6 @@
             document.getElementById('reportHeaderMeta').innerText = `พบข้อมูลทั้งหมด ${filteredCases.length} รายการ`;
         }
 
-        // 11. Modal ดูรูป Preview ขนาดใหญ่
         function openImageModal(imgSrc) {
             document.getElementById('modalPreviewImage').src = imgSrc;
             document.getElementById('imagePreviewModal').classList.remove('hidden');
@@ -1204,7 +1367,6 @@
             document.getElementById('imagePreviewModal').classList.add('hidden');
         }
 
-        // Preview & Convert Image to Base64
         function previewImg(input, prevId, placeId) {
             const file = input.files[0];
             if (file) {
@@ -1217,6 +1379,8 @@
 
                     if (prevId === 'prev1') tempImg1 = base64Str;
                     if (prevId === 'prev2') tempImg2 = base64Str;
+                    if (prevId === 'fixPrev1') tempFixImg1 = base64Str;
+                    if (prevId === 'fixPrev2') tempFixImg2 = base64Str;
                 }
                 reader.readAsDataURL(file);
             }
