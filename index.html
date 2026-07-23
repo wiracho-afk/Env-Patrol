@@ -13,7 +13,7 @@
     <!-- Google Fonts: Prompt -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK (Compat Versions) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -191,7 +191,6 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">ถ่ายรูปปัญหาจากกล้องโดยตรง (สูงสุด 2 รูป)</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <!-- Input 1 -->
                             <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('pImg1').click()">
                                 <input type="file" id="pImg1" accept="image/*" capture="environment" class="hidden" onchange="previewImg(this, 'prev1', 'place1')">
                                 <div id="place1">
@@ -201,7 +200,6 @@
                                 <img id="prev1" class="hidden w-full h-32 object-cover rounded-lg shadow-sm">
                             </div>
 
-                            <!-- Input 2 -->
                             <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('pImg2').click()">
                                 <input type="file" id="pImg2" accept="image/*" capture="environment" class="hidden" onchange="previewImg(this, 'prev2', 'place2')">
                                 <div id="place2">
@@ -233,7 +231,6 @@
                     </div>
                 </div>
 
-                <!-- Report Filter Controls -->
                 <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4 no-print">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
@@ -277,7 +274,6 @@
                     </div>
                 </div>
 
-                <!-- Generated Report Display Area -->
                 <div id="reportDisplayArea" class="border rounded-xl p-6 bg-white space-y-4">
                     <div class="text-center border-b pb-4">
                         <h2 class="text-xl font-bold text-slate-800">รายงานสรุปการตรวจตระเวนสิ่งแวดล้อม (Env Patrol Report)</h2>
@@ -300,9 +296,7 @@
                                     <th class="p-3 text-center">สถานะ / แก้ไขทาง LINE</th>
                                 </tr>
                             </thead>
-                            <tbody id="reportTableBody" class="divide-y divide-slate-200">
-                                <!-- Dynamic Rows Generated Here -->
-                            </tbody>
+                            <tbody id="reportTableBody" class="divide-y divide-slate-200"></tbody>
                         </table>
                     </div>
                 </div>
@@ -313,7 +307,6 @@
         <!-- ==================== ADMIN VIEW ==================== -->
         <div id="adminView" class="hidden space-y-10">
 
-            <!-- Admin Header -->
             <div class="bg-slate-800 text-white p-6 rounded-xl shadow-lg flex justify-between items-center">
                 <div>
                     <h2 class="text-2xl font-bold flex items-center">
@@ -329,7 +322,6 @@
                 </div>
             </div>
 
-            <!-- ADMIN TAB MENU -->
             <div class="flex border-b border-slate-300 space-x-4">
                 <button onclick="switchAdminSubTab('review')" id="adminSubTabReview" class="pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center">
                     <i class="fa-solid fa-list-check mr-2"></i> 1. ตรวจสอบงานแก้ไข (Approve Fixes)
@@ -345,7 +337,6 @@
                 </button>
             </div>
 
-            <!-- ADMIN SUBTAB 1: APPROVE FIXES -->
             <div id="adminPanelReview" class="bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
                 <h3 class="font-bold text-slate-800 text-lg flex items-center">
                     <i class="fa-solid fa-clipboard-check text-indigo-600 mr-2"></i> รายการที่ผู้รับผิดชอบส่งผลการแก้ไขเข้ามา (รอ Admin ตรวจสอบ)
@@ -362,14 +353,11 @@
                                 <th class="p-3 text-center">การอนุมัติ (Admin Decision)</th>
                             </tr>
                         </thead>
-                        <tbody id="adminReviewTableBody" class="divide-y divide-slate-200">
-                            <!-- Dynamic Content -->
-                        </tbody>
+                        <tbody id="adminReviewTableBody" class="divide-y divide-slate-200"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- ADMIN SUBTAB 2: DEPARTMENT & LINE ID MANAGEMENT -->
             <div id="adminPanelDept" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
                 <div class="flex justify-between items-center">
                     <h3 class="font-bold text-slate-800 text-lg flex items-center">
@@ -395,7 +383,6 @@
                 </div>
             </div>
 
-            <!-- ADMIN SUBTAB 3: CATEGORY MANAGEMENT -->
             <div id="adminPanelCat" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
                 <div class="flex justify-between items-center">
                     <h3 class="font-bold text-slate-800 text-lg flex items-center">
@@ -421,7 +408,6 @@
                 </div>
             </div>
 
-            <!-- ADMIN SUBTAB 4: ALL CASES EDIT / DELETE MANAGEMENT -->
             <div id="adminPanelCases" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
                 <div class="flex justify-between items-center border-b pb-4">
                     <div>
@@ -446,9 +432,7 @@
                                 <th class="p-3 text-center">การจัดการ (Action)</th>
                             </tr>
                         </thead>
-                        <tbody id="adminCasesTableBody" class="divide-y divide-slate-200">
-                            <!-- Dynamic Rows -->
-                        </tbody>
+                        <tbody id="adminCasesTableBody" class="divide-y divide-slate-200"></tbody>
                     </table>
                 </div>
             </div>
@@ -457,30 +441,28 @@
 
     </div>
 
-    <!-- MODAL FOR LINE LINK NOTIFICATION -->
+    <!-- MODAL FOR LINE MESSAGE NOTIFICATION -->
     <div id="lineLinkModal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-5 text-center">
-            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl">
-                <i class="fa-brands fa-line"></i>
-            </div>
-            <div>
-                <h3 class="text-xl font-bold text-slate-800">บันทึกข้อมูลเรียบร้อยแล้ว!</h3>
-                <p class="text-xs text-slate-500 mt-1">กรุณาคัดลอกลิงก์แก้ไขงานด้านล่างนี้ ส่งให้ผู้รับผิดชอบทาง LINE</p>
-            </div>
-
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-left space-y-2">
-                <p class="text-xs font-bold text-slate-700" id="lineLinkCaseId">รหัสเคส: -</p>
-                <p class="text-xs text-slate-600" id="lineLinkPic">ผู้รับผิดชอบ: -</p>
-                <div class="flex items-center space-x-2 pt-1">
-                    <input type="text" id="generatedFixUrl" readonly class="w-full text-xs font-mono bg-white border px-3 py-2 rounded-lg outline-none text-slate-600">
-                    <button onclick="copyFixLinkUrl()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shrink-0 flex items-center">
-                        <i class="fa-solid fa-copy mr-1"></i> คัดลอก
-                    </button>
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-5">
+            <div class="text-center space-y-1">
+                <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl mb-2">
+                    <i class="fa-brands fa-line"></i>
                 </div>
+                <h3 class="text-xl font-bold text-slate-800">บันทึกข้อมูลเรียบร้อยแล้ว!</h3>
+                <p class="text-xs text-slate-500">กดปุ่มคัดลอกข้อความด้านล่าง นำไปวางส่งในแชท LINE ผู้รับผิดชอบได้ทันที</p>
             </div>
 
-            <div class="flex justify-center space-x-3 pt-2">
-                <button onclick="closeLineLinkModal()" class="bg-slate-700 hover:bg-slate-800 text-white px-6 py-2 rounded-lg text-xs font-medium transition">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">ตัวอย่างข้อความแจ้งเตือนที่จะถูกคัดลอก:</label>
+                <textarea id="generatedFixUrl" rows="7" readonly class="w-full text-xs font-mono bg-slate-50 border p-3 rounded-xl outline-none text-slate-700 leading-relaxed"></textarea>
+            </div>
+
+            <div class="flex justify-center space-x-3 pt-1">
+                <button onclick="copyFixLinkUrl()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-6 py-2.5 rounded-lg transition shadow-md flex items-center space-x-1.5">
+                    <i class="fa-solid fa-copy"></i>
+                    <span>คัดลอกข้อความสรุปเคส + ลิงก์แก้ไข</span>
+                </button>
+                <button onclick="closeLineLinkModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-5 py-2.5 rounded-lg text-xs font-semibold transition">
                     ปิดหน้าต่าง
                 </button>
             </div>
@@ -632,7 +614,6 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // 1. Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDchNLUlXXTeK34IwExXeADqAckH9lQDBs",
             authDomain: "env-patrol.firebaseapp.com",
@@ -644,7 +625,6 @@
             measurementId: "G-Z4E8VXWJTX"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         firebase.analytics();
         const db = firebase.database();
@@ -661,7 +641,6 @@
         let tempFixImg1 = "";
         let tempFixImg2 = "";
 
-        // 2. Load Realtime Data on Start
         document.addEventListener("DOMContentLoaded", function() {
             initDashboardCharts();
             listenToRealtimeData();
@@ -718,7 +697,6 @@
             });
         }
 
-        // 3. จัดการแผนก
         function openDeptModal(id) {
             document.getElementById('deptModal').classList.remove('hidden');
             if (id) {
@@ -768,7 +746,6 @@
             }
         }
 
-        // 4. จัดการหมวดหมู่
         function openCatModal(id) {
             document.getElementById('catModal').classList.remove('hidden');
             if (id) {
@@ -818,7 +795,6 @@
             }
         }
 
-        // 5. ฟังก์ชันล้างข้อมูลใน FIREBASE
         function resetSystemData() {
             const code = prompt("⚠️ เตือนภัย! การล้างข้อมูลจะทำการลบเคสทั้งหมดออกจากฐานข้อมูล Firebase อย่างถาวร\nกรุณากรอกรหัสยืนยัน '9999' เพื่อยืนยัน:");
             
@@ -831,7 +807,7 @@
             }
         }
 
-        // 6. บันทึกเคสใหม่ลง Firebase & สร้างลิงก์ส่งทาง LINE ผู้รับผิดชอบ
+        // สรุปเนื้อหาเคสสร้างเป็น Text Format สำหรับส่งใน LINE แชท
         function submitPatrolForm(e) {
             e.preventDefault();
             const loc = document.getElementById('location').value;
@@ -871,10 +847,10 @@
                     const currentBaseUrl = window.location.href.split('?')[0];
                     const fixUrl = `${currentBaseUrl}?fixCaseId=${firebaseKey}`;
 
-                    document.getElementById('lineLinkCaseId').innerText = `รหัสเคส: ${newCase.id} (${newCase.location})`;
-                    document.getElementById('lineLinkPic').innerText = `ผู้รับผิดชอบ: ${newCase.pic} (${newCase.deptName})`;
-                    document.getElementById('generatedFixUrl').value = fixUrl;
+                    // ฟอร์แมตข้อความสวยงามสำหรับส่งทาง LINE
+                    const lineMessage = `🚨 แจ้งพบปัญหาสิ่งแวดล้อม [${newCase.id}]\n📍 พื้นที่: ${newCase.location}\n🏢 แผนกรับผิดชอบ: ${newCase.deptName}\n👤 ผู้รับผิดชอบ: ${newCase.pic}\n⚠️ ความรุนแรง: ${newCase.severity}\n📝 รายละเอียดปัญหา: ${newCase.description}\n----------------------------------\n📲 กดลิงก์ด้านล่างเพื่อบันทึกผลการแก้ไขและแนบรูปถ่าย:\n${fixUrl}`;
 
+                    document.getElementById('generatedFixUrl').value = lineMessage;
                     document.getElementById('lineLinkModal').classList.remove('hidden');
 
                     document.getElementById('patrolForm').reset();
@@ -892,14 +868,13 @@
             const input = document.getElementById('generatedFixUrl');
             input.select();
             document.execCommand('copy');
-            alert('คัดลอกลิงก์เรียบร้อยแล้ว!\nคุณสามารถนำลิงก์นี้ไปวางส่งในแชท LINE ผู้รับผิดชอบได้ทันที');
+            alert('คัดลอกข้อความสรุปเคสพร้อมลิงก์แก้ไขเรียบร้อยแล้ว!\nสามารถนำไปวางส่งในแชท LINE ได้ทันทีครับ');
         }
 
         function closeLineLinkModal() {
             document.getElementById('lineLinkModal').classList.add('hidden');
         }
 
-        // 7. ระบบผู้รับผิดชอบส่งผลการแก้ไขเข้า Admin
         function openPersonFixModalByFirebaseId(firebaseId) {
             const item = patrolCases.find(c => c.firebaseId === firebaseId);
             if (!item) return;
@@ -937,7 +912,6 @@
             }).catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
         }
 
-        // 8. สลับหน้า Admin / User
         function switchTab(view) {
             if (view === 'user') {
                 document.getElementById('userView').classList.remove('hidden');
@@ -1006,7 +980,6 @@
             }
         }
 
-        // 9. อัปเดต UI และ Stats แบบ Real-time
         function updateDashboardStats() {
             const total = patrolCases.length;
             const resolved = patrolCases.filter(c => c.status === 'Resolved').length;
@@ -1024,7 +997,6 @@
         function updateChartsData() {
             if (!chart1 || !chart2 || !chart3 || !chart4) return;
             
-            // Chart 1: รายเดือน
             const monthLabels = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
             const monthlyResolved = new Array(12).fill(0);
             const monthlyPending = new Array(12).fill(0);
@@ -1044,7 +1016,6 @@
             chart1.data.datasets[1].data = monthlyPending;
             chart1.update();
 
-            // Chart 2: แยกตามแผนก
             const deptLabels = departments.length > 0 ? departments.map(d => d.name) : ['ยังไม่มีข้อมูลแผนก'];
             const deptResolved = new Array(deptLabels.length).fill(0);
             const deptPending = new Array(deptLabels.length).fill(0);
@@ -1060,7 +1031,6 @@
             chart2.data.datasets[1].data = deptPending;
             chart2.update();
 
-            // Chart 3: แยกตามหมวดหมู่
             const catLabels = categories.length > 0 ? categories.map(c => c.name) : ['ยังไม่มีข้อมูลหมวดหมู่'];
             const catResolved = new Array(catLabels.length).fill(0);
             const catPending = new Array(catLabels.length).fill(0);
@@ -1076,7 +1046,6 @@
             chart3.data.datasets[1].data = catPending;
             chart3.update();
 
-            // Chart 4: แยกตามระดับความรุนแรง
             const sevKeys = ['Low', 'Medium', 'High', 'Critical'];
             const sevResolved = [0, 0, 0, 0];
             const sevPending = [0, 0, 0, 0];
@@ -1172,7 +1141,6 @@
             });
         }
 
-        // 10. แสดงรายการรออนุมัติการแก้ไขใน Admin (Subtab 1)
         function renderAdminReviewTable() {
             const tbody = document.getElementById('adminReviewTableBody');
             if (!tbody) return;
@@ -1228,7 +1196,6 @@
             }
         }
 
-        // 11. แสดงรายการเคสทั้งหมดใน ADMIN (Subtab 4)
         function renderAdminCasesTable() {
             const tbody = document.getElementById('adminCasesTableBody');
             if (!tbody) return;
@@ -1298,7 +1265,6 @@
             }
         }
 
-        // 12. ระบบสร้างรายงานสด
         function generateLiveReport() {
             const tbody = document.getElementById('reportTableBody');
             if (!tbody) return;
