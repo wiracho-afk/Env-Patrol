@@ -171,6 +171,23 @@
                 </div>
 
                 <form id="patrolForm" onsubmit="submitPatrolForm(event)" class="space-y-6">
+                    <!-- เพิ่มส่วนระบุผู้ตรวจ / ผู้แจ้งเรื่อง -->
+                    <div class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-3">
+                        <label class="block text-sm font-bold text-emerald-900 flex items-center">
+                            <i class="fa-solid fa-user-check text-emerald-600 mr-2"></i> ผู้ตรวจ / ผู้แจ้งเรื่อง (Inspector) <span class="text-red-500 ml-1">*</span>
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <select id="inspectorSelect" onchange="toggleCustomInspectorInput()" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
+                                    <!-- Dynamic content -->
+                                </select>
+                            </div>
+                            <div id="customInspectorContainer" class="hidden">
+                                <input type="text" id="customInspectorInput" placeholder="กรอกชื่อ-นามสกุล ผู้ตรวจ..." class="w-full px-4 py-2 border border-emerald-400 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">พื้นที่พบปัญหา <span class="text-red-500">*</span></label>
@@ -296,6 +313,7 @@
                                 <tr class="bg-slate-800 text-white uppercase font-semibold text-[11px] border-b">
                                     <th class="p-3">รหัสเคส</th>
                                     <th class="p-3">วันที่</th>
+                                    <th class="p-3">ผู้ตรวจ</th>
                                     <th class="p-3">พื้นที่พบปัญหา</th>
                                     <th class="p-3">แผนกรับผิดชอบ</th>
                                     <th class="p-3">ผู้รับผิดชอบ</th>
@@ -330,18 +348,22 @@
                 </button>
             </div>
 
-            <div class="flex border-b border-slate-300 space-x-4">
-                <button onclick="switchAdminSubTab('review')" id="adminSubTabReview" class="pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm">
+            <!-- เพิ่มแถบจัดการรายชื่อผู้ตรวจ -->
+            <div class="flex border-b border-slate-300 space-x-4 overflow-x-auto">
+                <button onclick="switchAdminSubTab('review')" id="adminSubTabReview" class="pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm whitespace-nowrap">
                     1. ตรวจสอบงานแก้ไข
                 </button>
-                <button onclick="switchAdminSubTab('dept')" id="adminSubTabDept" class="pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm">
+                <button onclick="switchAdminSubTab('dept')" id="adminSubTabDept" class="pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">
                     2. แผนก & ผู้รับผิดชอบ & LINE User ID
                 </button>
-                <button onclick="switchAdminSubTab('cat')" id="adminSubTabCat" class="pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm">
+                <button onclick="switchAdminSubTab('cat')" id="adminSubTabCat" class="pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">
                     3. หมวดหมู่สิ่งแวดล้อม
                 </button>
-                <button onclick="switchAdminSubTab('cases')" id="adminSubTabCases" class="pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm">
-                    4. จัดการ/แก้ไข/ลบ รายงานเคส
+                <button onclick="switchAdminSubTab('inspector')" id="adminSubTabInspector" class="pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">
+                    4. รายชื่อผู้ตรวจ (Inspectors)
+                </button>
+                <button onclick="switchAdminSubTab('cases')" id="adminSubTabCases" class="pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">
+                    5. จัดการ/แก้ไข/ลบ รายงานเคส
                 </button>
             </div>
 
@@ -400,13 +422,33 @@
                 </div>
             </div>
 
+            <!-- เพิ่มส่วนหน้าต่างจัดการผู้ตรวจ (Inspector) -->
+            <div id="adminPanelInspector" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 text-lg">จัดการรายชื่อผู้ตรวจสิ่งแวดล้อม (Inspectors)</h3>
+                    <button onclick="openInspectorModal(null)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">+ เพิ่มรายชื่อผู้ตรวจใหม่</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-semibold border-b">
+                                <th class="p-3">ชื่อ-นามสกุล</th>
+                                <th class="p-3">ตำแหน่ง / แผนก</th>
+                                <th class="p-3 text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminInspectorTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div id="adminPanelCases" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
                 <h3 class="font-bold text-slate-800 text-lg">จัดการเคสรายงานทั้งหมด</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr class="bg-slate-800 text-white uppercase font-semibold text-[11px]">
-                                <th class="p-3">รหัสเคส</th><th class="p-3">วันที่</th><th class="p-3">พื้นที่</th><th class="p-3">แผนก</th><th class="p-3">หมวดหมู่</th><th class="p-3">รายละเอียด</th><th class="p-3 text-center">สถานะ</th><th class="p-3 text-center">จัดการ</th>
+                                <th class="p-3">รหัสเคส</th><th class="p-3">วันที่</th><th class="p-3">ผู้ตรวจ</th><th class="p-3">พื้นที่</th><th class="p-3">แผนก</th><th class="p-3">หมวดหมู่</th><th class="p-3">รายละเอียด</th><th class="p-3 text-center">สถานะ</th><th class="p-3 text-center">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="adminCasesTableBody" class="divide-y divide-slate-200"></tbody>
@@ -523,6 +565,26 @@
         </div>
     </div>
 
+    <!-- MODAL FOR ADD/EDIT INSPECTOR -->
+    <div id="inspectorModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <h3 class="font-bold text-slate-800 text-base" id="inspectorModalTitle">เพิ่ม/แก้ไขรายชื่อผู้ตรวจ</h3>
+            <input type="hidden" id="inspectorEditId">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
+                <input type="text" id="inspectorInputName" class="w-full px-3 py-2 border rounded-lg text-sm outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">ตำแหน่ง / แผนก</label>
+                <input type="text" id="inspectorInputRole" placeholder="เช่น เจ้าหน้าที่ SHE, ผจก. จป." class="w-full px-3 py-2 border rounded-lg text-sm outline-none">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeInspectorModal()" class="px-4 py-2 border rounded-lg text-xs">ยกเลิก</button>
+                <button onclick="saveInspectorData()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold">บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT LOGIC -->
     <script>
         const firebaseConfig = {
@@ -543,6 +605,7 @@
         let isAdminLoggedIn = false;
         let departments = [];
         let categories = [];
+        let inspectors = [];
         let patrolCases = [];
 
         let chart1, chart2, chart3, chart4;
@@ -551,7 +614,6 @@
         let tempFixImg1 = ""; let tempFixImg2 = "";
 
         document.addEventListener("DOMContentLoaded", function() {
-            // Register DataLabels Plugin
             if (typeof ChartDataLabels !== 'undefined') {
                 Chart.register(ChartDataLabels);
             }
@@ -608,37 +670,65 @@
                 renderAdminCatTable();
                 updateDashboardStats();
             });
+
+            db.ref('inspectors').on('value', (snapshot) => {
+                const data = snapshot.val();
+                inspectors = [];
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        inspectors.push({ id: key, ...data[key] });
+                    });
+                }
+                renderInspectorOptions();
+                renderAdminInspectorTable();
+            });
         }
 
-function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
-    // 🔗 นำ URL Web App จาก Google Apps Script ที่ได้จาก Step 2 มาวางตรงนี้
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzw51JrRXxpvS-dyxJFq1wUbgU403GDVsFHaXFxc32i-4r4Ef5FviadOt78mWguvLERwA/exec";
+        function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
+            const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzw51JrRXxpvS-dyxJFq1wUbgU403GDVsFHaXFxc32i-4r4Ef5FviadOt78mWguvLERwA/exec";
 
-    if (!targetUserId || targetUserId === '-') {
-        alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
-        return;
-    }
+            if (!targetUserId || targetUserId === '-') {
+                alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
+                return;
+            }
 
-    const payload = {
-        to: targetUserId,
-        caseData: caseData,
-        fixUrl: fixUrl
-    };
+            const payload = {
+                to: targetUserId,
+                caseData: caseData,
+                fixUrl: fixUrl
+            };
 
-    fetch(GAS_WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-    })
-    .catch(err => alert("เกิดข้อผิดพลาดในการยิง LINE: " + err.message));
-}
+            fetch(GAS_WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
+            })
+            .catch(err => alert("เกิดข้อผิดพลาดในการยิง LINE: " + err.message));
+        }
 
         function submitPatrolForm(e) {
             e.preventDefault();
+
+            // ดึงค่าผู้ตรวจ
+            const inspSelect = document.getElementById('inspectorSelect').value;
+            let finalInspectorName = "";
+            if (inspSelect === 'custom') {
+                finalInspectorName = document.getElementById('customInspectorInput').value.trim();
+                if (!finalInspectorName) {
+                    alert('กรุณากรอกชื่อผู้ตรวจในช่อง "อื่นๆ"');
+                    return;
+                }
+            } else if (inspSelect) {
+                finalInspectorName = inspSelect;
+            } else {
+                alert('กรุณาเลือกหรือกรอกชื่อผู้ตรวจ');
+                return;
+            }
+
             const loc = document.getElementById('location').value;
             const deptId = document.getElementById('departmentSelect').value;
             const dept = departments.find(d => d.id == deptId);
@@ -654,6 +744,7 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
                 id: caseIdNumber,
                 date: new Date().toISOString().split('T')[0],
                 month: String(new Date().getMonth() + 1).padStart(2, '0'),
+                inspectorName: finalInspectorName,
                 location: loc,
                 deptId: deptId,
                 deptName: dept ? dept.name : '-',
@@ -678,6 +769,7 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
 
                     document.getElementById('patrolForm').reset();
                     document.getElementById('picDisplay').value = 'กรุณาเลือกแผนก';
+                    toggleCustomInspectorInput();
                     tempImg1 = ""; tempImg2 = "";
                     document.getElementById('prev1').classList.add('hidden');
                     document.getElementById('place1').classList.remove('hidden');
@@ -811,6 +903,95 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             }
         }
 
+        // --- เพิ่มฟังก์ชันส่วนผู้ตรวจ (Inspectors) ---
+        function renderInspectorOptions() {
+            const select = document.getElementById('inspectorSelect');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- เลือกผู้ตรวจ / ผู้แจ้ง --</option>';
+            inspectors.forEach(ins => {
+                select.innerHTML += `<option value="${ins.name}">${ins.name} ${ins.role ? '('+ins.role+')' : ''}</option>`;
+            });
+            select.innerHTML += '<option value="custom">-- อื่นๆ (ระบุชื่อด้วยตนเอง) --</option>';
+        }
+
+        function toggleCustomInspectorInput() {
+            const selectVal = document.getElementById('inspectorSelect').value;
+            const container = document.getElementById('customInspectorContainer');
+            const input = document.getElementById('customInspectorInput');
+            if (selectVal === 'custom') {
+                container.classList.remove('hidden');
+                input.required = true;
+            } else {
+                container.classList.add('hidden');
+                input.required = false;
+                input.value = '';
+            }
+        }
+
+        function renderAdminInspectorTable() {
+            const tbody = document.getElementById('adminInspectorTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (inspectors.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-slate-400">ยังไม่มีรายชื่อผู้ตรวจในระบบ</td></tr>';
+                return;
+            }
+            inspectors.forEach((ins) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-medium text-slate-800">${ins.name}</td>
+                        <td class="p-3 text-slate-600">${ins.role || '-'}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="openInspectorModal('${ins.id}')" class="text-indigo-600 hover:text-indigo-800 mr-3 text-xs font-semibold"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
+                            <button onclick="deleteInspector('${ins.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold"><i class="fa-solid fa-trash"></i> ลบ</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openInspectorModal(id) {
+            document.getElementById('inspectorModal').classList.remove('hidden');
+            if (id) {
+                const item = inspectors.find(i => i.id == id);
+                document.getElementById('inspectorModalTitle').innerText = 'แก้ไขรายชื่อผู้ตรวจ';
+                document.getElementById('inspectorEditId').value = item.id;
+                document.getElementById('inspectorInputName').value = item.name || '';
+                document.getElementById('inspectorInputRole').value = item.role || '';
+            } else {
+                document.getElementById('inspectorModalTitle').innerText = 'เพิ่มผู้ตรวจใหม่';
+                document.getElementById('inspectorEditId').value = '';
+                document.getElementById('inspectorInputName').value = '';
+                document.getElementById('inspectorInputRole').value = '';
+            }
+        }
+
+        function closeInspectorModal() { document.getElementById('inspectorModal').classList.add('hidden'); }
+
+        function saveInspectorData() {
+            const id = document.getElementById('inspectorEditId').value;
+            const name = document.getElementById('inspectorInputName').value.trim();
+            const role = document.getElementById('inspectorInputRole').value.trim();
+
+            if (!name) { alert('กรุณากรอกชื่อ-นามสกุลของผู้ตรวจ'); return; }
+
+            const payload = { name: name, role: role };
+
+            if (id) {
+                db.ref('inspectors/' + id).update(payload)
+                    .then(() => { alert('อัปเดตข้อมูลผู้ตรวจเรียบร้อยแล้ว!'); closeInspectorModal(); });
+            } else {
+                db.ref('inspectors').push(payload)
+                    .then(() => { alert('เพิ่มรายชื่อผู้ตรวจใหม่เรียบร้อยแล้ว!'); closeInspectorModal(); });
+            }
+        }
+
+        function deleteInspector(id) {
+            if (confirm('คุณต้องการลบรายชื่อผู้ตรวจนี้ใช่หรือไม่?')) {
+                db.ref('inspectors/' + id).remove();
+            }
+        }
+
         function switchTab(view) {
             if (view === 'user') {
                 document.getElementById('userView').classList.remove('hidden');
@@ -858,24 +1039,27 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
         }
 
         function switchAdminSubTab(sub) {
-            const panels = ['Review', 'Dept', 'Cat', 'Cases'];
+            const panels = ['Review', 'Dept', 'Cat', 'Inspector', 'Cases'];
             panels.forEach(p => {
                 document.getElementById('adminPanel' + p).classList.add('hidden');
-                document.getElementById('adminSubTab' + p).className = 'pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm flex items-center';
+                document.getElementById('adminSubTab' + p).className = 'pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm flex items-center whitespace-nowrap';
             });
 
             if(sub === 'review') {
                 document.getElementById('adminPanelReview').classList.remove('hidden');
-                document.getElementById('adminSubTabReview').className = 'pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center';
+                document.getElementById('adminSubTabReview').className = 'pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center whitespace-nowrap';
             } else if(sub === 'dept') {
                 document.getElementById('adminPanelDept').classList.remove('hidden');
-                document.getElementById('adminSubTabDept').className = 'pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center';
+                document.getElementById('adminSubTabDept').className = 'pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center whitespace-nowrap';
             } else if(sub === 'cat') {
                 document.getElementById('adminPanelCat').classList.remove('hidden');
-                document.getElementById('adminSubTabCat').className = 'pb-3 border-b-2 border-indigo-600 text-indigo-700 font-bold text-sm flex items-center';
+                document.getElementById('adminSubTabCat').className = 'pb-3 border-b-2 border-indigo-600 text-indigo-700 font-bold text-sm flex items-center whitespace-nowrap';
+            } else if(sub === 'inspector') {
+                document.getElementById('adminPanelInspector').classList.remove('hidden');
+                document.getElementById('adminSubTabInspector').className = 'pb-3 border-b-2 border-emerald-600 text-emerald-700 font-bold text-sm flex items-center whitespace-nowrap';
             } else if(sub === 'cases') {
                 document.getElementById('adminPanelCases').classList.remove('hidden');
-                document.getElementById('adminSubTabCases').className = 'pb-3 border-b-2 border-red-600 text-red-700 font-bold text-sm flex items-center';
+                document.getElementById('adminSubTabCases').className = 'pb-3 border-b-2 border-red-600 text-red-700 font-bold text-sm flex items-center whitespace-nowrap';
             }
         }
 
@@ -893,7 +1077,6 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             updateChartsData();
         }
 
-        // ปรับการอัปเดตข้อมูลให้เป็นแบบ Stacked Column พร้อมแสดงตัวเลขบนแท่ง
         function updateChartsData() {
             if (!chart1 || !chart2 || !chart3 || !chart4) return;
             
@@ -1113,6 +1296,7 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
                     <tr class="hover:bg-slate-50">
                         <td class="p-3 font-mono font-bold text-slate-800">${c.id}</td>
                         <td class="p-3 text-slate-600">${c.date || '-'}</td>
+                        <td class="p-3 font-medium text-emerald-700">${c.inspectorName || '-'}</td>
                         <td class="p-3 font-medium text-slate-800">${c.location || '-'}</td>
                         <td class="p-3 text-slate-700">${c.deptName || '-'}</td>
                         <td class="p-3 text-slate-700">${c.catName || '-'}</td>
@@ -1132,7 +1316,6 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             }
         }
 
-        // ปรับปรุงระบบรายงาน: คืนปุ่มส่งแก้ไข, คืน Preview รูป และเพิ่มข้อมูลผลงานแก้ไขหลัง Admin อนุมัติ
         function generateLiveReport() {
             const tbody = document.getElementById('reportTableBody');
             if (!tbody) return;
@@ -1150,33 +1333,29 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             });
 
             if (filteredCases.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" class="p-6 text-center text-slate-400 font-medium">ไม่พบข้อมูลตรงตามเงื่อนไขที่เลือก</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="14" class="p-6 text-center text-slate-400 font-medium">ไม่พบข้อมูลตรงตามเงื่อนไขที่เลือก</td></tr>';
             } else {
                 filteredCases.forEach((c, idx) => {
                     let statusBadge = c.status === 'Resolved' 
                         ? '<span class="bg-emerald-100 text-emerald-800 text-[11px] px-2.5 py-1 rounded-full font-bold">Resolved</span>'
                         : '<span class="bg-amber-100 text-amber-800 text-[11px] px-2.5 py-1 rounded-full font-bold">Pending</span>';
 
-                    // 1. รูปปัญหาก่อนแก้ไข + Preview
                     let imgHtml = '<div class="flex justify-center space-x-1.5">';
                     if (c.img1) imgHtml += `<img src="${c.img1}" class="w-10 h-10 object-cover rounded border cursor-pointer hover:opacity-80 transition" onclick="openImageModal('${c.img1}')">`;
                     if (c.img2) imgHtml += `<img src="${c.img2}" class="w-10 h-10 object-cover rounded border cursor-pointer hover:opacity-80 transition" onclick="openImageModal('${c.img2}')">`;
                     if (!c.img1 && !c.img2) imgHtml += '<span class="text-slate-400 text-[10px]">- ไม่มีรูป -</span>';
                     imgHtml += '</div>';
 
-                    // 2. คำอธิบายผลงานการแก้ไข
                     let fixDescText = c.fixDesc 
                         ? `<span class="text-slate-700 font-medium">${c.fixDesc}</span>` 
                         : `<span class="text-slate-400 italic text-[11px]">- ยังไม่มีข้อมูลแก้ไข -</span>`;
 
-                    // 3. รูปผลงานหลังแก้ไข + Preview
                     let fixImgHtml = '<div class="flex justify-center space-x-1.5">';
                     if (c.fixImg1) fixImgHtml += `<img src="${c.fixImg1}" class="w-10 h-10 object-cover rounded border border-emerald-300 cursor-pointer hover:opacity-80 transition" onclick="openImageModal('${c.fixImg1}')">`;
                     if (c.fixImg2) fixImgHtml += `<img src="${c.fixImg2}" class="w-10 h-10 object-cover rounded border border-emerald-300 cursor-pointer hover:opacity-80 transition" onclick="openImageModal('${c.fixImg2}')">`;
                     if (!c.fixImg1 && !c.fixImg2) fixImgHtml += '<span class="text-slate-400 text-[10px]">- ไม่มีรูป -</span>';
                     fixImgHtml += '</div>';
 
-                    // 4. ปุ่มกดเปิดฟอร์มส่งแก้ไขงาน (เฉพาะเคส Pending)
                     let actionBtn = c.status === 'Pending' 
                         ? `<button onclick="openPersonFixModalByFirebaseId('${c.firebaseId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-medium transition flex items-center justify-center mx-auto space-x-1 shadow-sm"><i class="fa-solid fa-pen-to-square"></i><span>ส่งแก้ไข</span></button>`
                         : `<span class="text-emerald-600 text-xs font-bold"><i class="fa-solid fa-check-double mr-1"></i>เรียบร้อย</span>`;
@@ -1187,6 +1366,7 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
                         <tr class="${rowBg} hover:bg-slate-100/80 transition">
                             <td class="p-3 font-mono font-bold text-slate-800">${c.id}</td>
                             <td class="p-3 text-slate-600 font-medium">${c.date || '-'}</td>
+                            <td class="p-3 font-semibold text-emerald-800">${c.inspectorName || '-'}</td>
                             <td class="p-3 font-semibold text-slate-800">${c.location || '-'}</td>
                             <td class="p-3 text-slate-700">${c.deptName || '-'}</td>
                             <td class="p-3 text-slate-700">${c.pic || '-'}</td>
@@ -1215,7 +1395,6 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             document.getElementById('imagePreviewModal').classList.add('hidden');
         }
 
-        // ฟังก์ชันย่อขนาดรูปภาพอัตโนมัติก่อนส่ง
         function previewImg(input, prevId, placeId) {
             const file = input.files[0];
             if (file) {
@@ -1263,7 +1442,12 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             }
         }
 
-        // คอนฟิกกราฟแบบ Stacked Column พร้อม DataLabels
+        function resetSystemData() {
+            if (confirm('คำเตือน: คุณต้องการล้างข้อมูลเคสทั้งหมดในระบบใช่หรือไม่?')) {
+                db.ref('patrolCases').remove().then(() => alert('ล้างข้อมูลเคสเรียบร้อยแล้ว'));
+            }
+        }
+
         function initDashboardCharts() {
             const promptFont = { family: 'Prompt', size: 11, weight: '600' };
 
