@@ -1125,24 +1125,58 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             document.getElementById('reportHeaderMeta').innerText = `พบข้อมูลทั้งหมด ${filteredCases.length} รายการ`;
         }
 
-        function previewImg(input, prevId, placeId) {
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const base64Str = e.target.result;
-                    document.getElementById(prevId).src = base64Str;
-                    document.getElementById(prevId).classList.remove('hidden');
-                    document.getElementById(placeId).classList.add('hidden');
+// ฟังก์ชันเดิมย่อรูปไม่ได้ ให้ใช้อันใหม่นี้เพื่อย่อขนาดรูปอัตโนมัติก่อนส่ง
+function previewImg(input, prevId, placeId) {
+    const file = input.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = function() {
+                // 1. กำหนดขนาดสูงสุด (Pixels)
+                const maxWidth = 1024;
+                const maxHeight = 1024;
+                let width = img.width;
+                let height = img.height;
 
-                    if (prevId === 'prev1') tempImg1 = base64Str;
-                    if (prevId === 'prev2') tempImg2 = base64Str;
-                    if (prevId === 'fixPrev1') tempFixImg1 = base64Str;
-                    if (prevId === 'fixPrev2') tempFixImg2 = base64Str;
+                // 2. คำนวณอัตราส่วนเพื่อไม่ให้ภาพเบี้ยว
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
                 }
-                reader.readAsDataURL(file);
-            }
-        }
+
+                // 3. วาดภาพลงบน Canvas เพื่อย่อขนาด
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // 4. แปลงไฟล์เป็น JPEG พร้อมตั้งความคมชัดที่ 70% (0.7)
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+                // 5. นำภาพที่ย่อแล้วไปแสดงและบันทึก
+                document.getElementById(prevId).src = compressedBase64;
+                document.getElementById(prevId).classList.remove('hidden');
+                document.getElementById(placeId).classList.add('hidden');
+
+                if (prevId === 'prev1') tempImg1 = compressedBase64;
+                if (prevId === 'prev2') tempImg2 = compressedBase64;
+                if (prevId === 'fixPrev1') tempFixImg1 = compressedBase64;
+                if (prevId === 'fixPrev2') tempFixImg2 = compressedBase64;
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+}
 
         function initDashboardCharts() {
             const promptFont = { family: 'Prompt' };
