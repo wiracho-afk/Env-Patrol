@@ -525,13 +525,14 @@
             checkUrlForFixAction();
         });
 
-        function checkUrlForFixAction() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const fixCaseId = urlParams.get('fixCaseId');
-            if (fixCaseId) {
-                setTimeout(() => openPersonFixModalByFirebaseId(fixCaseId), 1000);
-            }
-        }
+function checkUrlForFixAction() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fixCaseId = urlParams.get('fixCaseId');
+    if (fixCaseId) {
+        // เปลี่ยนจาก 1000 เป็น 500 เพื่อให้ Pop-up เด้งเร็วขึ้น
+        setTimeout(() => openPersonFixModalByFirebaseId(fixCaseId), 500); 
+    }
+}
 
         function listenToRealtimeData() {
             db.ref('patrolCases').on('value', (snapshot) => {
