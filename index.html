@@ -696,31 +696,32 @@
             });
         }
 
-        function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
-            const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwM10AjOywLpstN-UGLIfGMMorYAzldOr_if6wTezmp5sEItoUF8uKQW1IbkKPtEncBUA/exec";
+function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
+    // 🔗 นำ URL Web App จาก Google Apps Script ที่ได้จาก Step 2 มาวางตรงนี้
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwM10AjOywLpstN-UGLIfGMMorYAzldOr_if6wTezmp5sEItoUF8uKQW1IbkKPtEncBUA/exec";
 
-            if (!targetUserId || targetUserId === '-') {
-                alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
-                return;
-            }
+    if (!targetUserId || targetUserId === '-') {
+        alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
+        return;
+    }
 
-            const payload = {
-                to: targetUserId,
-                caseData: caseData,
-                fixUrl: fixUrl
-            };
+    const payload = {
+        to: targetUserId,
+        caseData: caseData,
+        fixUrl: fixUrl
+    };
 
-            fetch(GAS_WEB_APP_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            })
-            .then(() => {
-                alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-            })
-            .catch(err => alert("เกิดข้อผิดพลาดในการยิง LINE: " + err.message));
-        }
+    fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(() => {
+        alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
+    })
+    .catch(err => alert("เกิดข้อผิดพลาดในการยิง LINE: " + err.message));
+}
 
         function submitPatrolForm(e) {
             e.preventDefault();
