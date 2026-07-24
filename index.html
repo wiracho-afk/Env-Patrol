@@ -8,8 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
+    <!-- Chart.js + DataLabels Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <!-- Google Fonts: Prompt -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -111,29 +112,49 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
-                        <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center">
-                            <i class="fa-solid fa-chart-column text-emerald-600 mr-2"></i> 1. สรุปรายการ แยกตามรายเดือน
-                        </h3>
-                        <div class="relative h-64"><canvas id="chart1Monthly"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 flex flex-col justify-between">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                            <h3 class="font-bold text-slate-800 text-base flex items-center">
+                                <i class="fa-solid fa-chart-column text-emerald-600 mr-2"></i> 1. สรุปรายการ แยกตามรายเดือน
+                            </h3>
+                            <select id="chart1MonthFilter" onchange="updateChartsData()" class="text-xs border px-2.5 py-1 rounded-lg bg-slate-50 font-medium text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500 shrink-0">
+                                <option value="all">แสดงทุกเดือน (All Months)</option>
+                                <option value="01">มกราคม</option>
+                                <option value="02">กุมภาพันธ์</option>
+                                <option value="03">มีนาคม</option>
+                                <option value="04">เมษายน</option>
+                                <option value="05">พฤษภาคม</option>
+                                <option value="06">มิถุนายน</option>
+                                <option value="07">กรกฎาคม</option>
+                                <option value="08">สิงหาคม</option>
+                                <option value="09">กันยายน</option>
+                                <option value="10">ตุลาคม</option>
+                                <option value="11">พฤศจิกายน</option>
+                                <option value="12">ธันวาคม</option>
+                            </select>
+                        </div>
+                        <div class="relative h-64 w-full"><canvas id="chart1Monthly"></canvas></div>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 flex flex-col justify-between">
                         <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center">
                             <i class="fa-solid fa-building-user text-indigo-600 mr-2"></i> 2. สรุปรายการ แยกตามแผนกที่รับผิดชอบ
                         </h3>
-                        <div class="relative h-64"><canvas id="chart2Department"></canvas></div>
+                        <div class="relative h-64 w-full"><canvas id="chart2Department"></canvas></div>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 flex flex-col justify-between">
                         <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center">
                             <i class="fa-solid fa-layer-group text-blue-600 mr-2"></i> 3. สรุปรายการ แยกตามหมวดหมู่สิ่งแวดล้อม
                         </h3>
-                        <div class="relative h-64"><canvas id="chart3Category"></canvas></div>
+                        <div class="relative h-64 w-full"><canvas id="chart3Category"></canvas></div>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 flex flex-col justify-between">
                         <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center">
                             <i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i> 4. สรุปรายการ แยกตามระดับความรุนแรง
                         </h3>
-                        <div class="relative h-64"><canvas id="chart4Severity"></canvas></div>
+                        <div class="relative h-64 w-full"><canvas id="chart4Severity"></canvas></div>
                     </div>
                 </div>
             </div>
@@ -283,6 +304,9 @@
                                     <th class="p-3 text-center">รูปถ่ายปัญหา</th>
                                     <th class="p-3">ความรุนแรง</th>
                                     <th class="p-3 text-center">สถานะ</th>
+                                    <th class="p-3 max-w-xs">รายละเอียดผลการแก้ไข</th>
+                                    <th class="p-3 text-center">รูปหลังแก้ไข</th>
+                                    <th class="p-3 text-center no-print">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody id="reportTableBody" class="divide-y divide-slate-200"></tbody>
@@ -401,7 +425,7 @@
                     <h3 class="font-bold text-slate-800 text-base" id="fixModalCaseTitle">รายงานผลการแก้ไขปัญหาสิ่งแวดล้อม</h3>
                     <p class="text-xs text-emerald-600 font-semibold mt-0.5" id="fixModalDeptPic">-</p>
                 </div>
-                <button onclick="closePersonFixModal()" class="text-slate-400 text-lg"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="closePersonFixModal()" class="text-slate-400 text-lg hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-1">
@@ -438,6 +462,16 @@
                     <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-md">ส่งผลการแก้ไขเข้า Admin ตรวจสอบ</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL FOR IMAGE PREVIEW -->
+    <div id="imagePreviewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="closeImageModal()">
+        <div class="relative max-w-3xl w-full flex flex-col items-center" onclick="event.stopPropagation()">
+            <button onclick="closeImageModal()" class="absolute -top-10 right-0 text-white text-2xl font-bold hover:text-amber-400">
+                <i class="fa-solid fa-xmark"></i> ปิดหน้าต่าง
+            </button>
+            <img id="modalPreviewImage" src="" class="max-h-[80vh] max-w-full rounded-lg shadow-2xl object-contain border-2 border-white">
         </div>
     </div>
 
@@ -491,9 +525,6 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // 🔑 ใส่ CHANNEL ACCESS TOKEN จาก LINE DEVELOPERS ตรงนี้ครับ:
-        const LINE_ACCESS_TOKEN = "/2NyM3SaV5/54qjRvpmUrXCT64sbe5UXH8ngdOuqP/jp1k5UVygWbp53NvCrIcAYCKo5v2HGhPuPa8zwOpCibtEvxU8O6HRoZ5oW9z2VunpWIv5hnr594CD7EKtjj3D7TCHryiUHl0gNJfQfpPkjPwdB04t89/1O/w1cDnyilFU=";
-
         const firebaseConfig = {
             apiKey: "AIzaSyDchNLUlXXTeK34IwExXeADqAckH9lQDBs",
             authDomain: "env-patrol.firebaseapp.com",
@@ -520,19 +551,21 @@
         let tempFixImg1 = ""; let tempFixImg2 = "";
 
         document.addEventListener("DOMContentLoaded", function() {
+            // Register DataLabels Plugin
+            if (typeof ChartDataLabels !== 'undefined') {
+                Chart.register(ChartDataLabels);
+            }
             initDashboardCharts();
             listenToRealtimeData();
-            checkUrlForFixAction();
         });
 
-function checkUrlForFixAction() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const fixCaseId = urlParams.get('fixCaseId');
-    if (fixCaseId) {
-        // เปลี่ยนจาก 1000 เป็น 500 เพื่อให้ Pop-up เด้งเร็วขึ้น
-        setTimeout(() => openPersonFixModalByFirebaseId(fixCaseId), 500); 
-    }
-}
+        function checkUrlForFixAction() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fixCaseId = urlParams.get('fixCaseId');
+            if (fixCaseId && patrolCases.length > 0) {
+                setTimeout(() => openPersonFixModalByFirebaseId(fixCaseId), 300);
+            }
+        }
 
         function listenToRealtimeData() {
             db.ref('patrolCases').on('value', (snapshot) => {
@@ -547,6 +580,7 @@ function checkUrlForFixAction() {
                 renderAdminReviewTable();
                 renderAdminCasesTable();
                 generateLiveReport();
+                checkUrlForFixAction();
             });
 
             db.ref('departments').on('value', (snapshot) => {
@@ -576,33 +610,31 @@ function checkUrlForFixAction() {
             });
         }
 
-        // 📲 ฟังก์ชันยิง LINE Flex Message การ์ดข้อความสวยงามหาผู้รับผิดชอบ
-function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
-    // 🔗 นำ URL Web App จาก Google Apps Script ที่ได้จาก Step 2 มาวางตรงนี้
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzM5NhRoo3zqAh9MY_sCJX3sR6JJvxwR9eRaXRilPUNar9NWeeOvP2dwv1Fb66BJdrUIQ/exec";
+        function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
+            const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzM5NhRoo3zqAh9MY_sCJX3sR6JJvxwR9eRaXRilPUNar9NWeeOvP2dwv1Fb66BJdrUIQ/exec";
 
-    if (!targetUserId || targetUserId === '-') {
-        alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
-        return;
-    }
+            if (!targetUserId || targetUserId === '-') {
+                alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
+                return;
+            }
 
-    const payload = {
-        to: targetUserId,
-        caseData: caseData,
-        fixUrl: fixUrl
-    };
+            const payload = {
+                to: targetUserId,
+                caseData: caseData,
+                fixUrl: fixUrl
+            };
 
-    fetch(GAS_WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-    })
-    .catch(err => alert("เกิดข้อผิดพลาดในการยิง LINE: " + err.message));
-}
+            fetch(GAS_WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
+            })
+            .catch(err => alert("เกิดข้อผิดพลาดในการยิง LINE: " + err.message));
+        }
 
         function submitPatrolForm(e) {
             e.preventDefault();
@@ -641,7 +673,6 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
                     const currentBaseUrl = window.location.href.split('?')[0];
                     const fixUrl = `${currentBaseUrl}?fixCaseId=${firebaseKey}`;
 
-                    // ส่ง LINE Flex Message หาผู้รับผิดชอบ
                     sendLineFlexMessage(dept ? dept.lineId : null, newCase, fixUrl);
 
                     document.getElementById('patrolForm').reset();
@@ -861,28 +892,52 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             updateChartsData();
         }
 
+        // ปรับการอัปเดตข้อมูลให้เป็นแบบ Stacked Column พร้อมแสดงตัวเลขบนแท่ง
         function updateChartsData() {
             if (!chart1 || !chart2 || !chart3 || !chart4) return;
             
-            const monthLabels = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-            const monthlyResolved = new Array(12).fill(0);
-            const monthlyPending = new Array(12).fill(0);
+            const monthFilter = document.getElementById('chart1MonthFilter') ? document.getElementById('chart1MonthFilter').value : 'all';
+            const allMonthLabels = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            
+            let displayLabels = [];
+            let monthlyResolved = [];
+            let monthlyPending = [];
 
-            patrolCases.forEach(c => {
-                if (c.month) {
-                    const mIdx = parseInt(c.month, 10) - 1;
-                    if (mIdx >= 0 && mIdx < 12) {
-                        if (c.status === 'Resolved') monthlyResolved[mIdx]++;
-                        else monthlyPending[mIdx]++;
+            if (monthFilter === 'all') {
+                displayLabels = allMonthLabels;
+                monthlyResolved = new Array(12).fill(0);
+                monthlyPending = new Array(12).fill(0);
+
+                patrolCases.forEach(c => {
+                    if (c.month) {
+                        const mIdx = parseInt(c.month, 10) - 1;
+                        if (mIdx >= 0 && mIdx < 12) {
+                            if (c.status === 'Resolved') monthlyResolved[mIdx]++;
+                            else monthlyPending[mIdx]++;
+                        }
                     }
-                }
-            });
+                });
+            } else {
+                const mIdx = parseInt(monthFilter, 10) - 1;
+                displayLabels = [allMonthLabels[mIdx]];
+                let res = 0; let pen = 0;
+                
+                patrolCases.forEach(c => {
+                    if (c.month === monthFilter) {
+                        if (c.status === 'Resolved') res++;
+                        else pen++;
+                    }
+                });
+                monthlyResolved = [res];
+                monthlyPending = [pen];
+            }
 
-            chart1.data.labels = monthLabels;
+            chart1.data.labels = displayLabels;
             chart1.data.datasets[0].data = monthlyResolved;
             chart1.data.datasets[1].data = monthlyPending;
             chart1.update();
 
+            // Chart 2: Department Stacked
             const deptLabels = departments.length > 0 ? departments.map(d => d.name) : ['ยังไม่มีข้อมูลแผนก'];
             const deptResolved = new Array(deptLabels.length).fill(0);
             const deptPending = new Array(deptLabels.length).fill(0);
@@ -898,6 +953,7 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             chart2.data.datasets[1].data = deptPending;
             chart2.update();
 
+            // Chart 3: Category Stacked
             const catLabels = categories.length > 0 ? categories.map(c => c.name) : ['ยังไม่มีข้อมูลหมวดหมู่'];
             const catResolved = new Array(catLabels.length).fill(0);
             const catPending = new Array(catLabels.length).fill(0);
@@ -913,6 +969,7 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             chart3.data.datasets[1].data = catPending;
             chart3.update();
 
+            // Chart 4: Severity Stacked
             const sevKeys = ['Low', 'Medium', 'High', 'Critical'];
             const sevResolved = [0, 0, 0, 0];
             const sevPending = [0, 0, 0, 0];
@@ -1013,8 +1070,8 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
 
             pendingWithFixes.forEach(c => {
                 let fixImgHtml = '<div class="flex space-x-1 mt-1">';
-                if(c.fixImg1) fixImgHtml += `<img src="${c.fixImg1}" class="w-10 h-10 object-cover rounded border cursor-pointer" onclick="openImageModal('${c.fixImg1}')">`;
-                if(c.fixImg2) fixImgHtml += `<img src="${c.fixImg2}" class="w-10 h-10 object-cover rounded border cursor-pointer" onclick="openImageModal('${c.fixImg2}')">`;
+                if(c.fixImg1) fixImgHtml += `<img src="${c.fixImg1}" class="w-10 h-10 object-cover rounded border cursor-pointer hover:opacity-80" onclick="openImageModal('${c.fixImg1}')">`;
+                if(c.fixImg2) fixImgHtml += `<img src="${c.fixImg2}" class="w-10 h-10 object-cover rounded border cursor-pointer hover:opacity-80" onclick="openImageModal('${c.fixImg2}')">`;
                 fixImgHtml += '</div>';
 
                 tbody.innerHTML += `
@@ -1025,8 +1082,8 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
                         <td class="p-3"><p class="text-xs text-slate-700 mb-1 font-semibold">"${c.fixDesc}"</p>${fixImgHtml}</td>
                         <td class="p-3 text-center">
                             <div class="flex justify-center space-x-2">
-                                <button onclick="approveCase('${c.firebaseId}', true)" class="bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-semibold"><i class="fa-solid fa-check mr-1"></i> ยอมรับ</button>
-                                <button onclick="approveCase('${c.firebaseId}', false)" class="bg-red-500 text-white px-3 py-1.5 rounded text-xs font-semibold"><i class="fa-solid fa-xmark mr-1"></i> ตีกลับ</button>
+                                <button onclick="approveCase('${c.firebaseId}', true)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-semibold shadow-sm"><i class="fa-solid fa-check mr-1"></i> ยอมรับ</button>
+                                <button onclick="approveCase('${c.firebaseId}', false)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-semibold shadow-sm"><i class="fa-solid fa-xmark mr-1"></i> ตีกลับ</button>
                             </div>
                         </td>
                     </tr>
@@ -1074,14 +1131,15 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             }
         }
 
+        // ปรับปรุงระบบรายงาน: คืนปุ่มส่งแก้ไข, คืน Preview รูป และเพิ่มข้อมูลผลงานแก้ไขหลัง Admin อนุมัติ
         function generateLiveReport() {
             const tbody = document.getElementById('reportTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            const selectedDept = document.getElementById('reportDeptSelect').value;
-            const selectedMonth = document.getElementById('reportMonthSelect').value;
-            const selectedStatus = document.getElementById('reportStatusSelect').value;
+            const selectedDept = document.getElementById('reportDeptSelect') ? document.getElementById('reportDeptSelect').value : 'all';
+            const selectedMonth = document.getElementById('reportMonthSelect') ? document.getElementById('reportMonthSelect').value : 'all';
+            const selectedStatus = document.getElementById('reportStatusSelect') ? document.getElementById('reportStatusSelect').value : 'all';
 
             let filteredCases = patrolCases.filter(c => {
                 let matchDept = (selectedDept === 'all') || (c.deptId == selectedDept);
@@ -1091,18 +1149,36 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             });
 
             if (filteredCases.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="p-6 text-center text-slate-400 font-medium">ไม่พบข้อมูลตรงตามเงื่อนไขที่เลือก</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="13" class="p-6 text-center text-slate-400 font-medium">ไม่พบข้อมูลตรงตามเงื่อนไขที่เลือก</td></tr>';
             } else {
                 filteredCases.forEach((c, idx) => {
                     let statusBadge = c.status === 'Resolved' 
                         ? '<span class="bg-emerald-100 text-emerald-800 text-[11px] px-2.5 py-1 rounded-full font-bold">Resolved</span>'
                         : '<span class="bg-amber-100 text-amber-800 text-[11px] px-2.5 py-1 rounded-full font-bold">Pending</span>';
 
+                    // 1. รูปปัญหาก่อนแก้ไข + Preview
                     let imgHtml = '<div class="flex justify-center space-x-1.5">';
-                    if (c.img1) imgHtml += `<img src="${c.img1}" class="w-10 h-10 object-cover rounded border cursor-pointer" onclick="openImageModal('${c.img1}')">`;
-                    if (c.img2) imgHtml += `<img src="${c.img2}" class="w-10 h-10 object-cover rounded border cursor-pointer" onclick="openImageModal('${c.img2}')">`;
+                    if (c.img1) imgHtml += `<img src="${c.img1}" class="w-10 h-10 object-cover rounded border cursor-pointer hover:opacity-80 transition" onclick="openImageModal('${c.img1}')">`;
+                    if (c.img2) imgHtml += `<img src="${c.img2}" class="w-10 h-10 object-cover rounded border cursor-pointer hover:opacity-80 transition" onclick="openImageModal('${c.img2}')">`;
                     if (!c.img1 && !c.img2) imgHtml += '<span class="text-slate-400 text-[10px]">- ไม่มีรูป -</span>';
                     imgHtml += '</div>';
+
+                    // 2. คำอธิบายผลงานการแก้ไข
+                    let fixDescText = c.fixDesc 
+                        ? `<span class="text-slate-700 font-medium">${c.fixDesc}</span>` 
+                        : `<span class="text-slate-400 italic text-[11px]">- ยังไม่มีข้อมูลแก้ไข -</span>`;
+
+                    // 3. รูปผลงานหลังแก้ไข + Preview
+                    let fixImgHtml = '<div class="flex justify-center space-x-1.5">';
+                    if (c.fixImg1) fixImgHtml += `<img src="${c.fixImg1}" class="w-10 h-10 object-cover rounded border border-emerald-300 cursor-pointer hover:opacity-80 transition" onclick="openImageModal('${c.fixImg1}')">`;
+                    if (c.fixImg2) fixImgHtml += `<img src="${c.fixImg2}" class="w-10 h-10 object-cover rounded border border-emerald-300 cursor-pointer hover:opacity-80 transition" onclick="openImageModal('${c.fixImg2}')">`;
+                    if (!c.fixImg1 && !c.fixImg2) fixImgHtml += '<span class="text-slate-400 text-[10px]">- ไม่มีรูป -</span>';
+                    fixImgHtml += '</div>';
+
+                    // 4. ปุ่มกดเปิดฟอร์มส่งแก้ไขงาน (เฉพาะเคส Pending)
+                    let actionBtn = c.status === 'Pending' 
+                        ? `<button onclick="openPersonFixModalByFirebaseId('${c.firebaseId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-medium transition flex items-center justify-center mx-auto space-x-1 shadow-sm"><i class="fa-solid fa-pen-to-square"></i><span>ส่งแก้ไข</span></button>`
+                        : `<span class="text-emerald-600 text-xs font-bold"><i class="fa-solid fa-check-double mr-1"></i>เรียบร้อย</span>`;
 
                     let rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
 
@@ -1118,6 +1194,9 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
                             <td class="p-3 text-center">${imgHtml}</td>
                             <td class="p-3"><span class="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-[11px] font-semibold">${c.severity || 'Medium'}</span></td>
                             <td class="p-3 text-center">${statusBadge}</td>
+                            <td class="p-3 max-w-xs leading-snug">${fixDescText}</td>
+                            <td class="p-3 text-center">${fixImgHtml}</td>
+                            <td class="p-3 text-center no-print">${actionBtn}</td>
                         </tr>
                     `;
                 });
@@ -1125,89 +1204,131 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl) {
             document.getElementById('reportHeaderMeta').innerText = `พบข้อมูลทั้งหมด ${filteredCases.length} รายการ`;
         }
 
-// ฟังก์ชันเดิมย่อรูปไม่ได้ ให้ใช้อันใหม่นี้เพื่อย่อขนาดรูปอัตโนมัติก่อนส่ง
-function previewImg(input, prevId, placeId) {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.src = e.target.result;
-            img.onload = function() {
-                // 1. กำหนดขนาดสูงสุด (Pixels)
-                const maxWidth = 1024;
-                const maxHeight = 1024;
-                let width = img.width;
-                let height = img.height;
+        function openImageModal(imgSrc) {
+            if(!imgSrc) return;
+            document.getElementById('modalPreviewImage').src = imgSrc;
+            document.getElementById('imagePreviewModal').classList.remove('hidden');
+        }
 
-                // 2. คำนวณอัตราส่วนเพื่อไม่ให้ภาพเบี้ยว
-                if (width > height) {
-                    if (width > maxWidth) {
-                        height = Math.round((height * maxWidth) / width);
-                        width = maxWidth;
-                    }
-                } else {
-                    if (height > maxHeight) {
-                        width = Math.round((width * maxHeight) / height);
-                        height = maxHeight;
+        function closeImageModal() {
+            document.getElementById('imagePreviewModal').classList.add('hidden');
+        }
+
+        // ฟังก์ชันย่อขนาดรูปภาพอัตโนมัติก่อนส่ง
+        function previewImg(input, prevId, placeId) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const maxWidth = 1024;
+                        const maxHeight = 1024;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+                        document.getElementById(prevId).src = compressedBase64;
+                        document.getElementById(prevId).classList.remove('hidden');
+                        document.getElementById(placeId).classList.add('hidden');
+
+                        if (prevId === 'prev1') tempImg1 = compressedBase64;
+                        if (prevId === 'prev2') tempImg2 = compressedBase64;
+                        if (prevId === 'fixPrev1') tempFixImg1 = compressedBase64;
+                        if (prevId === 'fixPrev2') tempFixImg2 = compressedBase64;
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // คอนฟิกกราฟแบบ Stacked Column พร้อม DataLabels
+        function initDashboardCharts() {
+            const promptFont = { family: 'Prompt', size: 11, weight: '600' };
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true, beginAtZero: true }
+                },
+                plugins: {
+                    legend: { labels: { font: { family: 'Prompt' } } },
+                    datalabels: {
+                        color: '#ffffff',
+                        font: promptFont,
+                        formatter: (value) => value > 0 ? value : ''
                     }
                 }
-
-                // 3. วาดภาพลงบน Canvas เพื่อย่อขนาด
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // 4. แปลงไฟล์เป็น JPEG พร้อมตั้งความคมชัดที่ 70% (0.7)
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-                // 5. นำภาพที่ย่อแล้วไปแสดงและบันทึก
-                document.getElementById(prevId).src = compressedBase64;
-                document.getElementById(prevId).classList.remove('hidden');
-                document.getElementById(placeId).classList.add('hidden');
-
-                if (prevId === 'prev1') tempImg1 = compressedBase64;
-                if (prevId === 'prev2') tempImg2 = compressedBase64;
-                if (prevId === 'fixPrev1') tempFixImg1 = compressedBase64;
-                if (prevId === 'fixPrev2') tempFixImg2 = compressedBase64;
             };
-        };
-        reader.readAsDataURL(file);
-    }
-}
 
-        function initDashboardCharts() {
-            const promptFont = { family: 'Prompt' };
             chart1 = new Chart(document.getElementById('chart1Monthly'), {
                 type: 'bar',
                 data: {
                     labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
                     datasets: [
-                        { label: 'แก้ไขแล้ว', data: new Array(12).fill(0), backgroundColor: '#10b981', borderRadius: 5 },
-                        { label: 'ยังไม่แก้ไข', data: new Array(12).fill(0), backgroundColor: '#f59e0b', borderRadius: 5 }
+                        { label: 'แก้ไขแล้ว', data: new Array(12).fill(0), backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'ยังไม่แก้ไข', data: new Array(12).fill(0), backgroundColor: '#f59e0b', borderRadius: 4 }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: promptFont } } } }
+                options: commonOptions
             });
 
             chart2 = new Chart(document.getElementById('chart2Department'), {
                 type: 'bar',
-                data: { labels: [], datasets: [{ label: 'แก้ไขแล้ว', data: [], backgroundColor: '#10b981' }, { label: 'ยังไม่แก้ไข', data: [], backgroundColor: '#f59e0b' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: promptFont } } } }
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'แก้ไขแล้ว', data: [], backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'ยังไม่แก้ไข', data: [], backgroundColor: '#f59e0b', borderRadius: 4 }
+                    ]
+                },
+                options: commonOptions
             });
 
             chart3 = new Chart(document.getElementById('chart3Category'), {
                 type: 'bar',
-                data: { labels: [], datasets: [{ label: 'แก้ไขแล้ว', data: [], backgroundColor: '#10b981' }, { label: 'ยังไม่แก้ไข', data: [], backgroundColor: '#f59e0b' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: promptFont } } } }
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'แก้ไขแล้ว', data: [], backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'ยังไม่แก้ไข', data: [], backgroundColor: '#f59e0b', borderRadius: 4 }
+                    ]
+                },
+                options: commonOptions
             });
 
             chart4 = new Chart(document.getElementById('chart4Severity'), {
                 type: 'bar',
-                data: { labels: ['Low', 'Medium', 'High', 'Critical'], datasets: [{ label: 'แก้ไขแล้ว', data: [0,0,0,0], backgroundColor: '#10b981' }, { label: 'ยังไม่แก้ไข', data: [0,0,0,0], backgroundColor: '#f59e0b' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: promptFont } } } }
+                data: {
+                    labels: ['Low', 'Medium', 'High', 'Critical'],
+                    datasets: [
+                        { label: 'แก้ไขแล้ว', data: [0, 0, 0, 0], backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'ยังไม่แก้ไข', data: [0, 0, 0, 0], backgroundColor: '#f59e0b', borderRadius: 4 }
+                    ]
+                },
+                options: commonOptions
             });
         }
     </script>
