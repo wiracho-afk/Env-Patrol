@@ -144,10 +144,18 @@
                             </h3>
                             <select id="chart1MonthFilter" onchange="updateChartsData()" class="text-xs border px-2.5 py-1 rounded-lg bg-slate-50 font-medium text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500 shrink-0">
                                 <option value="all">แสดงทุกเดือน (All Months)</option>
-                                <option value="01">มกราคม</option><option value="02">กุมภาพันธ์</option><option value="03">มีนาคม</option>
-                                <option value="04">เมษายน</option><option value="05">พฤษภาคม</option><option value="06">มิถุนายน</option>
-                                <option value="07">กรกฎาคม</option><option value="08">สิงหาคม</option><option value="09">กันยายน</option>
-                                <option value="10">ตุลาคม</option><option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
+                                <option value="01">มกราคม</option>
+                                <option value="02">กุมภาพันธ์</option>
+                                <option value="03">มีนาคม</option>
+                                <option value="04">เมษายน</option>
+                                <option value="05">พฤษภาคม</option>
+                                <option value="06">มิถุนายน</option>
+                                <option value="07">กรกฎาคม</option>
+                                <option value="08">สิงหาคม</option>
+                                <option value="09">กันยายน</option>
+                                <option value="10">ตุลาคม</option>
+                                <option value="11">พฤศจิกายน</option>
+                                <option value="12">ธันวาคม</option>
                             </select>
                         </div>
                         <div class="relative h-64 w-full"><canvas id="chart1Monthly"></canvas></div>
@@ -294,7 +302,7 @@
                                 <option value="all">ทุกเดือน (All Months)</option>
                                 <option value="01">มกราคม</option><option value="02">กุมภาพันธ์</option><option value="03">มีนาคม</option>
                                 <option value="04">เมษายน</option><option value="05">พฤษภาคม</option><option value="06">มิถุนายน</option>
-                                <option value="07">กรกฎาคม</option><option value="08" selected>สิงหาคม</option><option value="09">กันยายน</option>
+                                <option value="07" selected>กรกฎาคม</option><option value="08">สิงหาคม</option><option value="09">กันยายน</option>
                                 <option value="10">ตุลาคม</option><option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
                             </select>
                         </div>
@@ -392,9 +400,6 @@
                 <button onclick="switchAdminSubTab('cases')" id="adminSubTabCases" class="pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">
                     5. จัดการ/แก้ไข/ลบ รายงานเคส
                 </button>
-                <button onclick="switchAdminSubTab('deleted')" id="adminSubTabDeleted" class="pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">
-                    6. ประวัติการลบเคส (Audit Log)
-                </button>
             </div>
 
             <div id="adminPanelReview" class="bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
@@ -481,23 +486,6 @@
                             </tr>
                         </thead>
                         <tbody id="adminCasesTableBody" class="divide-y divide-slate-200"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- DELETED CASES LOG -->
-            <div id="adminPanelDeleted" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
-                <h3 class="font-bold text-slate-800 text-lg flex items-center text-red-600">
-                    <i class="fa-solid fa-trash-can-arrow-up mr-2"></i> ประวัติการลบรายงานเคส (Deleted Cases Log)
-                </h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="bg-slate-700 text-white uppercase font-semibold text-[11px]">
-                                <th class="p-3">รหัสเคสที่ถูกลบ</th><th class="p-3">วันที่ลบ</th><th class="p-3">ผู้ตรวจเดิม</th><th class="p-3">พื้นที่</th><th class="p-3">แผนก</th><th class="p-3">รายละเอียดเดิม</th><th class="p-3">เหตุผลการลบ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminDeletedTableBody" class="divide-y divide-slate-200"></tbody>
                     </table>
                 </div>
             </div>
@@ -672,7 +660,6 @@
         let categories = [];
         let inspectors = [];
         let patrolCases = [];
-        let deletedCasesLog = [];
 
         let chart1, chart2, chart3, chart4;
 
@@ -710,17 +697,6 @@
                 generateLiveReport();
                 generateAIExecutiveInsight();
                 checkUrlForFixAction();
-            });
-
-            db.ref('deletedCases').on('value', (snapshot) => {
-                const data = snapshot.val();
-                deletedCasesLog = [];
-                if (data) {
-                    Object.keys(data).forEach(key => {
-                        deletedCasesLog.push({ firebaseId: key, ...data[key] });
-                    });
-                }
-                renderAdminDeletedTable();
             });
 
             db.ref('departments').on('value', (snapshot) => {
@@ -850,74 +826,35 @@
             `;
         }
 
-       // --- ULTRA STABLE LINE FLEX SUBMISSION (FETCH API DIRECT SUBMIT) ---
-function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = null) {
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyBDARjTaW2qkLxeeY1UZBAg8EPTHjnTVmq6kSm25xz5QB-gYzzN9vGSNONxEg3b-CpTA/exec";
+        function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = null) {
+            const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyBDARjTaW2qkLxeeY1UZBAg8EPTHjnTVmq6kSm25xz5QB-gYzzN9vGSNONxEg3b-CpTA/exec";
 
-    if (!targetUserId || targetUserId === '-' || targetUserId.trim() === '') {
-        alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
-        return;
-    }
+            if (!targetUserId || targetUserId === '-') {
+                alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
+                return;
+            }
 
-    const cleanUserId = targetUserId.trim();
+            const payload = {
+                to: targetUserId,
+                caseData: caseData,
+                fixUrl: fixUrl,
+                customMessage: customMessage
+            };
 
-    const payloadData = {
-        to: cleanUserId,
-        caseData: JSON.stringify(caseData),
-        fixUrl: fixUrl,
-        customMessage: customMessage || ""
-    };
-
-    // ส่งข้อมูลแบบ URL Encoded หรือ text/plain เพื่อเลี่ยง CORS preflight บล็อก
-    fetch(GAS_WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify(payloadData)
-    })
-    .then(() => {
-        if (customMessage) {
-            alert(`ส่ง LINE แจ้งเตือนตีกลับ ไปยังผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-        } else {
-            alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-        }
-    })
-    .catch(err => {
-        alert("การส่ง LINE แจ้งเตือนล้มเหลว: " + err.message);
-    });
-}
-
-        // --- CASE ID GENERATION LOGIC: PT-MMYY-XXX ---
-        function generateNextCaseId() {
-            const now = new Date();
-            const monthStr = String(now.getMonth() + 1).padStart(2, '0');
-            const yearStr = String(now.getFullYear()).slice(-2);
-            const prefix = `PT-${monthStr}${yearStr}-`;
-
-            let maxNum = 0;
-
-            patrolCases.forEach(c => {
-                if (c.id && c.id.startsWith(prefix)) {
-                    const numPart = parseInt(c.id.replace(prefix, ''), 10);
-                    if (!isNaN(numPart) && numPart > maxNum) {
-                        maxNum = numPart;
-                    }
+            fetch(GAS_WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                if (customMessage) {
+                    alert(`ส่ง LINE แจ้งเตือนตีกลับพร้อมเหตุผล ไปยังผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
+                } else {
+                    alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
                 }
-            });
-
-            deletedCasesLog.forEach(c => {
-                if (c.caseId && c.caseId.startsWith(prefix)) {
-                    const numPart = parseInt(c.caseId.replace(prefix, ''), 10);
-                    if (!isNaN(numPart) && numPart > maxNum) {
-                        maxNum = numPart;
-                    }
-                }
-            });
-
-            const nextSeq = String(maxNum + 1).padStart(3, '0');
-            return `${prefix}${nextSeq}`;
+            })
+            .catch(err => alert("เกิดข้อผิดพลาดในการยิง LINE: " + err.message));
         }
 
         function submitPatrolForm(e) {
@@ -946,7 +883,8 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = nul
             const sev = document.getElementById('severity').value;
             const desc = document.getElementById('description').value;
 
-            const caseIdNumber = generateNextCaseId();
+            const nextSeq = String(patrolCases.length + 1).padStart(3, '0');
+            const caseIdNumber = `PATROL-2026-${nextSeq}`;
 
             const newCase = {
                 id: caseIdNumber,
@@ -1265,7 +1203,7 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = nul
         }
 
         function switchAdminSubTab(sub) {
-            const panels = ['Review', 'Dept', 'Cat', 'Inspector', 'Cases', 'Deleted'];
+            const panels = ['Review', 'Dept', 'Cat', 'Inspector', 'Cases'];
             panels.forEach(p => {
                 document.getElementById('adminPanel' + p).classList.add('hidden');
                 document.getElementById('adminSubTab' + p).className = 'pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm flex items-center whitespace-nowrap';
@@ -1286,9 +1224,6 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = nul
             } else if(sub === 'cases') {
                 document.getElementById('adminPanelCases').classList.remove('hidden');
                 document.getElementById('adminSubTabCases').className = 'pb-3 border-b-2 border-red-600 text-red-700 font-bold text-sm flex items-center whitespace-nowrap';
-            } else if(sub === 'deleted') {
-                document.getElementById('adminPanelDeleted').classList.remove('hidden');
-                document.getElementById('adminSubTabDeleted').className = 'pb-3 border-b-2 border-slate-700 text-slate-800 font-bold text-sm flex items-center whitespace-nowrap';
             }
         }
 
@@ -1583,51 +1518,9 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = nul
         }
 
         function deleteCase(firebaseId, caseId) {
-            const c = patrolCases.find(item => item.firebaseId === firebaseId);
-            if (!c) return;
-
-            const deleteReason = prompt(`คุณต้องการลบเคส [${caseId}] ใช่หรือไม่?\nกรุณาระบุเหตุผลการลบข้อมูล (เพื่อบันทึกประวัติ Admin Audit Log):`, 'ข้อมูลซ้ำซ้อน / แจ้งผิดพลาด');
-            
-            if (deleteReason !== null) {
-                const deletedRecord = {
-                    caseId: c.id,
-                    deletedAt: new Date().toLocaleString('th-TH'),
-                    inspectorName: c.inspectorName || '-',
-                    location: c.location || '-',
-                    deptName: c.deptName || '-',
-                    description: c.description || '-',
-                    reason: deleteReason.trim() || 'ไม่ระบุเหตุผล'
-                };
-
-                db.ref('deletedCases').push(deletedRecord).then(() => {
-                    db.ref('patrolCases/' + firebaseId).remove().then(() => {
-                        alert(`ลบเคส [${caseId}] และบันทึกประวัติการลบลงระบบเรียบร้อยแล้ว`);
-                    });
-                }).catch(err => alert('เกิดข้อผิดพลาดในการบันทึกประวัติ: ' + err.message));
+            if (confirm(`คุณต้องการลบรายการเคส [${caseId}] ใช่หรือไม่?`)) {
+                db.ref('patrolCases/' + firebaseId).remove();
             }
-        }
-
-        function renderAdminDeletedTable() {
-            const tbody = document.getElementById('adminDeletedTableBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            if (deletedCasesLog.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">ยังไม่มีประวัติการลบเคสในระบบ</td></tr>';
-                return;
-            }
-            deletedCasesLog.forEach(c => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-mono font-bold text-red-600">${c.caseId}</td>
-                        <td class="p-3 text-slate-500 font-mono text-[11px]">${c.deletedAt || '-'}</td>
-                        <td class="p-3 text-slate-700 font-medium">${c.inspectorName || '-'}</td>
-                        <td class="p-3 text-slate-700">${c.location || '-'}</td>
-                        <td class="p-3 text-slate-700">${c.deptName || '-'}</td>
-                        <td class="p-3 text-slate-600 max-w-xs truncate">${c.description || '-'}</td>
-                        <td class="p-3 text-red-600 font-semibold italic">${c.reason || '-'}</td>
-                    </tr>
-                `;
-            });
         }
 
         function generateLiveReport() {
@@ -1724,97 +1617,52 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = nul
             document.getElementById('imagePreviewModal').classList.add('hidden');
         }
 
-       // --- UPLOAD IMAGE TO IMGBB API (FIXED & IMPROVED) ---
-function previewImg(input, prevId, placeId) {
-    const file = input.files[0];
-    if (!file) return;
+        function previewImg(input, prevId, placeId) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const maxWidth = 1024;
+                        const maxHeight = 1024;
+                        let width = img.width;
+                        let height = img.height;
 
-    const placeElem = document.getElementById(placeId);
-    const originalHTML = placeElem ? placeElem.innerHTML : '';
-    if (placeElem) {
-        placeElem.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-600 mb-1"></i><p class="text-xs font-semibold text-emerald-700">กำลังอัปโหลดรูปภาพไปยัง Cloud...</p>`;
-    }
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                        }
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.src = e.target.result;
-        img.onload = function() {
-            const maxWidth = 1024;
-            const maxHeight = 1024;
-            let width = img.width;
-            let height = img.height;
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
 
-            if (width > height) {
-                if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
-                }
-            } else {
-                if (height > maxHeight) {
-                    width = Math.round((width * maxHeight) / height);
-                    height = maxHeight;
-                }
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+                        document.getElementById(prevId).src = compressedBase64;
+                        document.getElementById(prevId).classList.remove('hidden');
+                        document.getElementById(placeId).classList.add('hidden');
+
+                        if (prevId === 'prev1') tempImg1 = compressedBase64;
+                        if (prevId === 'prev2') tempImg2 = compressedBase64;
+                        if (prevId === 'fixPrev1') tempFixImg1 = compressedBase64;
+                        if (prevId === 'fixPrev2') tempFixImg2 = compressedBase64;
+                    };
+                };
+                reader.readAsDataURL(file);
             }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-            const base64Data = compressedBase64.split(',')[1];
-
-            // ใช้ API Key ของคุณ
-            const apiKey = "f88f710117d4191dfd37178f1e0bac7e"; 
-            const formData = new FormData();
-            formData.append("key", apiKey);
-            formData.append("image", base64Data);
-
-            // ตั้งระบบ AbortController เพื่อป้องกัน Fetch ค้างเกิน 15 วินาที
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-            fetch("https://api.imgbb.com/1/upload", {
-                method: "POST",
-                body: formData,
-                signal: controller.signal
-            })
-            .then(res => res.json())
-            .then(resData => {
-                clearTimeout(timeoutId);
-                if (resData.success) {
-                    const imageUrl = resData.data.url;
-
-                    document.getElementById(prevId).src = imageUrl;
-                    document.getElementById(prevId).classList.remove('hidden');
-                    if (placeElem) placeElem.classList.add('hidden');
-
-                    if (prevId === 'prev1') tempImg1 = imageUrl;
-                    if (prevId === 'prev2') tempImg2 = imageUrl;
-                    if (prevId === 'fixPrev1') tempFixImg1 = imageUrl;
-                    if (prevId === 'fixPrev2') tempFixImg2 = imageUrl;
-                } else {
-                    alert("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: " + (resData.error ? resData.error.message : "Unknown error"));
-                    input.value = ""; // ล้างค่าไฟล์
-                    if (placeElem) placeElem.innerHTML = originalHTML; // คืนค่าหน้าตาเดิม
-                }
-            })
-            .catch(err => {
-                clearTimeout(timeoutId);
-                if (err.name === 'AbortError') {
-                    alert("การอัปโหลดรูปภาพใช้เวลานานเกินไป (Timeout) กรุณาลองใหม่อีกครั้ง");
-                } else {
-                    alert("อัปโหลดรูปภาพล้มเหลว: " + err.message);
-                }
-                input.value = ""; // ล้างค่าไฟล์
-                if (placeElem) placeElem.innerHTML = originalHTML; // คืนค่าหน้าตาเดิม ไม่ให้ค้างสปินเนอร์
-            });
-        };
-    };
-    reader.readAsDataURL(file);
-}
+        }
 
         function resetSystemData() {
             if (confirm('คำเตือน: คุณต้องการล้างข้อมูลเคสทั้งหมดในระบบใช่หรือไม่?')) {
