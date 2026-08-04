@@ -850,56 +850,44 @@
             `;
         }
 
-        // --- ULTRA STABLE LINE FLEX SUBMISSION (DYNAMIC FORM DIRECT SUBMIT) ---
-        function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = null) {
-            const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyBDARjTaW2qkLxeeY1UZBAg8EPTHjnTVmq6kSm25xz5QB-gYzzN9vGSNONxEg3b-CpTA/exec";
+       // --- ULTRA STABLE LINE FLEX SUBMISSION (FETCH API DIRECT SUBMIT) ---
+function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = null) {
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyBDARjTaW2qkLxeeY1UZBAg8EPTHjnTVmq6kSm25xz5QB-gYzzN9vGSNONxEg3b-CpTA/exec";
 
-            if (!targetUserId || targetUserId === '-' || targetUserId.trim() === '') {
-                alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
-                return;
-            }
+    if (!targetUserId || targetUserId === '-' || targetUserId.trim() === '') {
+        alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
+        return;
+    }
 
-            const cleanUserId = targetUserId.trim();
+    const cleanUserId = targetUserId.trim();
 
-            let iframe = document.getElementById("hidden_gas_iframe");
-            if (!iframe) {
-                iframe = document.createElement("iframe");
-                iframe.id = "hidden_gas_iframe";
-                iframe.name = "hidden_gas_iframe";
-                iframe.style.display = "none";
-                document.body.appendChild(iframe);
-            }
+    const payloadData = {
+        to: cleanUserId,
+        caseData: JSON.stringify(caseData),
+        fixUrl: fixUrl,
+        customMessage: customMessage || ""
+    };
 
-            const form = document.createElement("form");
-            form.method = "POST";
-            form.action = GAS_WEB_APP_URL;
-            form.target = "hidden_gas_iframe";
-
-            const fields = {
-                to: cleanUserId,
-                caseData: JSON.stringify(caseData),
-                fixUrl: fixUrl,
-                customMessage: customMessage || ""
-            };
-
-            for (const key in fields) {
-                const hiddenField = document.createElement("input");
-                hiddenField.type = "hidden";
-                hiddenField.name = key;
-                hiddenField.value = fields[key];
-                form.appendChild(hiddenField);
-            }
-
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
-
-            if (customMessage) {
-                alert(`ส่ง LINE แจ้งเตือนตีกลับ ไปยังผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-            } else {
-                alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-            }
+    // ส่งข้อมูลแบบ URL Encoded หรือ text/plain เพื่อเลี่ยง CORS preflight บล็อก
+    fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payloadData)
+    })
+    .then(() => {
+        if (customMessage) {
+            alert(`ส่ง LINE แจ้งเตือนตีกลับ ไปยังผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
+        } else {
+            alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
         }
+    })
+    .catch(err => {
+        alert("การส่ง LINE แจ้งเตือนล้มเหลว: " + err.message);
+    });
+}
 
         // --- CASE ID GENERATION LOGIC: PT-MMYY-XXX ---
         function generateNextCaseId() {
