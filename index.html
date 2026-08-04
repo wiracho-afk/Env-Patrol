@@ -852,7 +852,7 @@
 
         // --- ULTRA STABLE LINE FLEX SUBMISSION (DYNAMIC FORM DIRECT SUBMIT) ---
         function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = null) {
-            const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzeOJ9dMvQ8Ei_nQA-EMYOteuUtpqRc7OzfIg61gUYUv50cVOSSQKb4QYBZxbyiWET8XA/exec";
+            const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyBDARjTaW2qkLxeeY1UZBAg8EPTHjnTVmq6kSm25xz5QB-gYzzN9vGSNONxEg3b-CpTA/exec";
 
             if (!targetUserId || targetUserId === '-' || targetUserId.trim() === '') {
                 alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
@@ -861,7 +861,6 @@
 
             const cleanUserId = targetUserId.trim();
 
-            // สร้าง Hidden Form และ Hidden IFRAME ทะลุข้อจำกัด CORS ยิงหา GAS แน่นอน 100%
             let iframe = document.getElementById("hidden_gas_iframe");
             if (!iframe) {
                 iframe = document.createElement("iframe");
@@ -1737,51 +1736,82 @@
             document.getElementById('imagePreviewModal').classList.add('hidden');
         }
 
+        // --- UPLOAD IMAGE TO IMGBB API ---
         function previewImg(input, prevId, placeId) {
             const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = function() {
-                        const maxWidth = 1024;
-                        const maxHeight = 1024;
-                        let width = img.width;
-                        let height = img.height;
+            if (!file) return;
 
-                        if (width > height) {
-                            if (width > maxWidth) {
-                                height = Math.round((height * maxWidth) / width);
-                                width = maxWidth;
-                            }
-                        } else {
-                            if (height > maxHeight) {
-                                width = Math.round((width * maxHeight) / height);
-                                height = maxHeight;
-                            }
-                        }
-
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-                        document.getElementById(prevId).src = compressedBase64;
-                        document.getElementById(prevId).classList.remove('hidden');
-                        document.getElementById(placeId).classList.add('hidden');
-
-                        if (prevId === 'prev1') tempImg1 = compressedBase64;
-                        if (prevId === 'prev2') tempImg2 = compressedBase64;
-                        if (prevId === 'fixPrev1') tempFixImg1 = compressedBase64;
-                        if (prevId === 'fixPrev2') tempFixImg2 = compressedBase64;
-                    };
-                };
-                reader.readAsDataURL(file);
+            const placeElem = document.getElementById(placeId);
+            const originalHTML = placeElem ? placeElem.innerHTML : '';
+            if (placeElem) {
+                placeElem.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-600 mb-1"></i><p class="text-xs font-semibold text-emerald-700">กำลังอัปโหลดรูปภาพไปยัง Cloud...</p>`;
             }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const maxWidth = 1024;
+                    const maxHeight = 1024;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                    const base64Data = compressedBase64.split(',')[1];
+
+                    const apiKey = "f88f710117d4191dfd37178f1e0bac7e"; 
+                    const formData = new FormData();
+                    formData.append("key", apiKey);
+                    formData.append("image", base64Data);
+
+                    fetch("https://api.imgbb.com/1/upload", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(resData => {
+                        if (resData.success) {
+                            const imageUrl = resData.data.url;
+
+                            document.getElementById(prevId).src = imageUrl;
+                            document.getElementById(prevId).classList.remove('hidden');
+                            if (placeElem) placeElem.classList.add('hidden');
+
+                            if (prevId === 'prev1') tempImg1 = imageUrl;
+                            if (prevId === 'prev2') tempImg2 = imageUrl;
+                            if (prevId === 'fixPrev1') tempFixImg1 = imageUrl;
+                            if (prevId === 'fixPrev2') tempFixImg2 = imageUrl;
+                        } else {
+                            alert("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: " + (resData.error ? resData.error.message : "Unknown error"));
+                            if (placeElem) placeElem.innerHTML = originalHTML;
+                        }
+                    })
+                    .catch(err => {
+                        alert("อัปโหลดรูปภาพล้มเหลว: " + err.message);
+                        if (placeElem) placeElem.innerHTML = originalHTML;
+                    });
+                };
+            };
+            reader.readAsDataURL(file);
         }
 
         function resetSystemData() {
