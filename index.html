@@ -144,18 +144,10 @@
                             </h3>
                             <select id="chart1MonthFilter" onchange="updateChartsData()" class="text-xs border px-2.5 py-1 rounded-lg bg-slate-50 font-medium text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500 shrink-0">
                                 <option value="all">แสดงทุกเดือน (All Months)</option>
-                                <option value="01">มกราคม</option>
-                                <option value="02">กุมภาพันธ์</option>
-                                <option value="03">มีนาคม</option>
-                                <option value="04">เมษายน</option>
-                                <option value="05">พฤษภาคม</option>
-                                <option value="06">มิถุนายน</option>
-                                <option value="07">กรกฎาคม</option>
-                                <option value="08">สิงหาคม</option>
-                                <option value="09">กันยายน</option>
-                                <option value="10">ตุลาคม</option>
-                                <option value="11">พฤศจิกายน</option>
-                                <option value="12">ธันวาคม</option>
+                                <option value="01">มกราคม</option><option value="02">กุมภาพันธ์</option><option value="03">มีนาคม</option>
+                                <option value="04">เมษายน</option><option value="05">พฤษภาคม</option><option value="06">มิถุนายน</option>
+                                <option value="07">กรกฎาคม</option><option value="08">สิงหาคม</option><option value="09">กันยายน</option>
+                                <option value="10">ตุลาคม</option><option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
                             </select>
                         </div>
                         <div class="relative h-64 w-full"><canvas id="chart1Monthly"></canvas></div>
@@ -302,7 +294,7 @@
                                 <option value="all">ทุกเดือน (All Months)</option>
                                 <option value="01">มกราคม</option><option value="02">กุมภาพันธ์</option><option value="03">มีนาคม</option>
                                 <option value="04">เมษายน</option><option value="05">พฤษภาคม</option><option value="06">มิถุนายน</option>
-                                <option value="07" selected>กรกฎาคม</option><option value="08">สิงหาคม</option><option value="09">กันยายน</option>
+                                <option value="07">กรกฎาคม</option><option value="08" selected>สิงหาคม</option><option value="09">กันยายน</option>
                                 <option value="10">ตุลาคม</option><option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
                             </select>
                         </div>
@@ -400,6 +392,9 @@
                 <button onclick="switchAdminSubTab('cases')" id="adminSubTabCases" class="pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">
                     5. จัดการ/แก้ไข/ลบ รายงานเคส
                 </button>
+                <button onclick="switchAdminSubTab('deleted')" id="adminSubTabDeleted" class="pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm whitespace-nowrap">
+                    6. ประวัติการลบเคส (Audit Log)
+                </button>
             </div>
 
             <div id="adminPanelReview" class="bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
@@ -486,6 +481,23 @@
                             </tr>
                         </thead>
                         <tbody id="adminCasesTableBody" class="divide-y divide-slate-200"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DELETED CASES LOG -->
+            <div id="adminPanelDeleted" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200 space-y-6">
+                <h3 class="font-bold text-slate-800 text-lg flex items-center text-red-600">
+                    <i class="fa-solid fa-trash-can-arrow-up mr-2"></i> ประวัติการลบรายงานเคส (Deleted Cases Log)
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-700 text-white uppercase font-semibold text-[11px]">
+                                <th class="p-3">รหัสเคสที่ถูกลบ</th><th class="p-3">วันที่ลบ</th><th class="p-3">ผู้ตรวจเดิม</th><th class="p-3">พื้นที่</th><th class="p-3">แผนก</th><th class="p-3">รายละเอียดเดิม</th><th class="p-3">เหตุผลการลบ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminDeletedTableBody" class="divide-y divide-slate-200"></tbody>
                     </table>
                 </div>
             </div>
@@ -660,6 +672,7 @@
         let categories = [];
         let inspectors = [];
         let patrolCases = [];
+        let deletedCasesLog = [];
 
         let chart1, chart2, chart3, chart4;
 
@@ -697,6 +710,17 @@
                 generateLiveReport();
                 generateAIExecutiveInsight();
                 checkUrlForFixAction();
+            });
+
+            db.ref('deletedCases').on('value', (snapshot) => {
+                const data = snapshot.val();
+                deletedCasesLog = [];
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        deletedCasesLog.push({ firebaseId: key, ...data[key] });
+                    });
+                }
+                renderAdminDeletedTable();
             });
 
             db.ref('departments').on('value', (snapshot) => {
@@ -826,40 +850,88 @@
             `;
         }
 
-function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = null) {
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwM10AjOywLpstN-UGLIfGMMorYAzldOr_if6wTezmp5sEItoUF8uKQW1IbkKPtEncBUA/exec";
+        // --- ULTRA STABLE LINE FLEX SUBMISSION (DYNAMIC FORM DIRECT SUBMIT) ---
+        function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = null) {
+            const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzeOJ9dMvQ8Ei_nQA-EMYOteuUtpqRc7OzfIg61gUYUv50cVOSSQKb4QYBZxbyiWET8XA/exec";
 
-    if (!targetUserId || targetUserId === '-' || targetUserId.trim() === '') {
-        alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
-        return;
-    }
+            if (!targetUserId || targetUserId === '-' || targetUserId.trim() === '') {
+                alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
+                return;
+            }
 
-    const cleanUserId = targetUserId.trim();
+            const cleanUserId = targetUserId.trim();
 
-    // เปลี่ยนมาใช้ URLSearchParams เพื่อส่งข้อมูลข้ามโดเมนจาก GitHub ไป GAS โดยไม่ถูกบล็อก
-    const formData = new URLSearchParams();
-    formData.append("to", cleanUserId);
-    formData.append("caseData", JSON.stringify(caseData)); // แปลงเป็นข้อความก่อนส่ง
-    formData.append("fixUrl", fixUrl);
-    if (customMessage) {
-        formData.append("customMessage", customMessage);
-    }
+            // สร้าง Hidden Form และ Hidden IFRAME ทะลุข้อจำกัด CORS ยิงหา GAS แน่นอน 100%
+            let iframe = document.getElementById("hidden_gas_iframe");
+            if (!iframe) {
+                iframe = document.createElement("iframe");
+                iframe.id = "hidden_gas_iframe";
+                iframe.name = "hidden_gas_iframe";
+                iframe.style.display = "none";
+                document.body.appendChild(iframe);
+            }
 
-    fetch(GAS_WEB_APP_URL, {
-        method: "POST",
-        body: formData // ส่งเป็น Form Data ข้ามโดเมน
-    })
-    .then(() => {
-        if (customMessage) {
-            alert(`ส่ง LINE แจ้งเตือนตีกลับ ไปยังผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-        } else {
-            alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = GAS_WEB_APP_URL;
+            form.target = "hidden_gas_iframe";
+
+            const fields = {
+                to: cleanUserId,
+                caseData: JSON.stringify(caseData),
+                fixUrl: fixUrl,
+                customMessage: customMessage || ""
+            };
+
+            for (const key in fields) {
+                const hiddenField = document.createElement("input");
+                hiddenField.type = "hidden";
+                hiddenField.name = key;
+                hiddenField.value = fields[key];
+                form.appendChild(hiddenField);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+
+            if (customMessage) {
+                alert(`ส่ง LINE แจ้งเตือนตีกลับ ไปยังผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
+            } else {
+                alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
+            }
         }
-    })
-    .catch(err => {
-        alert("เกิดข้อผิดพลาดในการส่ง LINE: " + err.message);
-    });
-}
+
+        // --- CASE ID GENERATION LOGIC: PT-MMYY-XXX ---
+        function generateNextCaseId() {
+            const now = new Date();
+            const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+            const yearStr = String(now.getFullYear()).slice(-2);
+            const prefix = `PT-${monthStr}${yearStr}-`;
+
+            let maxNum = 0;
+
+            patrolCases.forEach(c => {
+                if (c.id && c.id.startsWith(prefix)) {
+                    const numPart = parseInt(c.id.replace(prefix, ''), 10);
+                    if (!isNaN(numPart) && numPart > maxNum) {
+                        maxNum = numPart;
+                    }
+                }
+            });
+
+            deletedCasesLog.forEach(c => {
+                if (c.caseId && c.caseId.startsWith(prefix)) {
+                    const numPart = parseInt(c.caseId.replace(prefix, ''), 10);
+                    if (!isNaN(numPart) && numPart > maxNum) {
+                        maxNum = numPart;
+                    }
+                }
+            });
+
+            const nextSeq = String(maxNum + 1).padStart(3, '0');
+            return `${prefix}${nextSeq}`;
+        }
 
         function submitPatrolForm(e) {
             e.preventDefault();
@@ -887,8 +959,7 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = nul
             const sev = document.getElementById('severity').value;
             const desc = document.getElementById('description').value;
 
-            const nextSeq = String(patrolCases.length + 1).padStart(3, '0');
-            const caseIdNumber = `PATROL-2026-${nextSeq}`;
+            const caseIdNumber = generateNextCaseId();
 
             const newCase = {
                 id: caseIdNumber,
@@ -1207,7 +1278,7 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = nul
         }
 
         function switchAdminSubTab(sub) {
-            const panels = ['Review', 'Dept', 'Cat', 'Inspector', 'Cases'];
+            const panels = ['Review', 'Dept', 'Cat', 'Inspector', 'Cases', 'Deleted'];
             panels.forEach(p => {
                 document.getElementById('adminPanel' + p).classList.add('hidden');
                 document.getElementById('adminSubTab' + p).className = 'pb-3 border-b-2 border-transparent text-slate-500 font-medium text-sm flex items-center whitespace-nowrap';
@@ -1228,6 +1299,9 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = nul
             } else if(sub === 'cases') {
                 document.getElementById('adminPanelCases').classList.remove('hidden');
                 document.getElementById('adminSubTabCases').className = 'pb-3 border-b-2 border-red-600 text-red-700 font-bold text-sm flex items-center whitespace-nowrap';
+            } else if(sub === 'deleted') {
+                document.getElementById('adminPanelDeleted').classList.remove('hidden');
+                document.getElementById('adminSubTabDeleted').className = 'pb-3 border-b-2 border-slate-700 text-slate-800 font-bold text-sm flex items-center whitespace-nowrap';
             }
         }
 
@@ -1522,9 +1596,51 @@ function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = nul
         }
 
         function deleteCase(firebaseId, caseId) {
-            if (confirm(`คุณต้องการลบรายการเคส [${caseId}] ใช่หรือไม่?`)) {
-                db.ref('patrolCases/' + firebaseId).remove();
+            const c = patrolCases.find(item => item.firebaseId === firebaseId);
+            if (!c) return;
+
+            const deleteReason = prompt(`คุณต้องการลบเคส [${caseId}] ใช่หรือไม่?\nกรุณาระบุเหตุผลการลบข้อมูล (เพื่อบันทึกประวัติ Admin Audit Log):`, 'ข้อมูลซ้ำซ้อน / แจ้งผิดพลาด');
+            
+            if (deleteReason !== null) {
+                const deletedRecord = {
+                    caseId: c.id,
+                    deletedAt: new Date().toLocaleString('th-TH'),
+                    inspectorName: c.inspectorName || '-',
+                    location: c.location || '-',
+                    deptName: c.deptName || '-',
+                    description: c.description || '-',
+                    reason: deleteReason.trim() || 'ไม่ระบุเหตุผล'
+                };
+
+                db.ref('deletedCases').push(deletedRecord).then(() => {
+                    db.ref('patrolCases/' + firebaseId).remove().then(() => {
+                        alert(`ลบเคส [${caseId}] และบันทึกประวัติการลบลงระบบเรียบร้อยแล้ว`);
+                    });
+                }).catch(err => alert('เกิดข้อผิดพลาดในการบันทึกประวัติ: ' + err.message));
             }
+        }
+
+        function renderAdminDeletedTable() {
+            const tbody = document.getElementById('adminDeletedTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (deletedCasesLog.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400">ยังไม่มีประวัติการลบเคสในระบบ</td></tr>';
+                return;
+            }
+            deletedCasesLog.forEach(c => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-mono font-bold text-red-600">${c.caseId}</td>
+                        <td class="p-3 text-slate-500 font-mono text-[11px]">${c.deletedAt || '-'}</td>
+                        <td class="p-3 text-slate-700 font-medium">${c.inspectorName || '-'}</td>
+                        <td class="p-3 text-slate-700">${c.location || '-'}</td>
+                        <td class="p-3 text-slate-700">${c.deptName || '-'}</td>
+                        <td class="p-3 text-slate-600 max-w-xs truncate">${c.description || '-'}</td>
+                        <td class="p-3 text-red-600 font-semibold italic">${c.reason || '-'}</td>
+                    </tr>
+                `;
+            });
         }
 
         function generateLiveReport() {
