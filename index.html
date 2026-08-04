@@ -826,36 +826,40 @@
             `;
         }
 
-        function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = null) {
-            const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyd-P-i9njKsyXGqsn4laomY2ZGJVnb1BGRTdUzLoz7PIQp7sWb9Ar_La5IQvR20bBvOw/exec";
+function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = null) {
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwM10AjOywLpstN-UGLIfGMMorYAzldOr_if6wTezmp5sEItoUF8uKQW1IbkKPtEncBUA/exec";
 
-            if (!targetUserId || targetUserId === '-') {
-                alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
-                return;
-            }
+    if (!targetUserId || targetUserId === '-' || targetUserId.trim() === '') {
+        alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
+        return;
+    }
 
-            const payload = {
-                to: targetUserId,
-                caseData: caseData,
-                fixUrl: fixUrl,
-                customMessage: customMessage
-            };
+    const cleanUserId = targetUserId.trim();
 
-            fetch(GAS_WEB_APP_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            })
-            .then(() => {
-                if (customMessage) {
-                    alert(`ส่ง LINE แจ้งเตือนตีกลับพร้อมเหตุผล ไปยังผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-                } else {
-                    alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-                }
-            })
-            .catch(err => alert("เกิดข้อผิดพลาดในการยิง LINE: " + err.message));
+    // เปลี่ยนมาใช้ URLSearchParams เพื่อส่งข้อมูลข้ามโดเมนจาก GitHub ไป GAS โดยไม่ถูกบล็อก
+    const formData = new URLSearchParams();
+    formData.append("to", cleanUserId);
+    formData.append("caseData", JSON.stringify(caseData)); // แปลงเป็นข้อความก่อนส่ง
+    formData.append("fixUrl", fixUrl);
+    if (customMessage) {
+        formData.append("customMessage", customMessage);
+    }
+
+    fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        body: formData // ส่งเป็น Form Data ข้ามโดเมน
+    })
+    .then(() => {
+        if (customMessage) {
+            alert(`ส่ง LINE แจ้งเตือนตีกลับ ไปยังผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
+        } else {
+            alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
         }
+    })
+    .catch(err => {
+        alert("เกิดข้อผิดพลาดในการส่ง LINE: " + err.message);
+    });
+}
 
         function submitPatrolForm(e) {
             e.preventDefault();
