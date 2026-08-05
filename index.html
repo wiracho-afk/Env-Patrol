@@ -826,36 +826,43 @@
             `;
         }
 
-        function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = null) {
-            const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyBDARjTaW2qkLxeeY1UZBAg8EPTHjnTVmq6kSm25xz5QB-gYzzN9vGSNONxEg3b-CpTA/exec";
+function sendLineFlexMessage(targetUserId, caseData, fixUrl, customMessage = null) {
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzFRIXK9UZJ_wCp_JBf-asWmCXW0od7X1ccXLTBxA7Z6nB2k8eZpduTPah8sHeUFm7iCA/exec";
 
-            if (!targetUserId || targetUserId === '-') {
-                alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
-                return;
-            }
+    if (!targetUserId || targetUserId === '-' || targetUserId.trim() === '') {
+        alert("บันทึกข้อมูลเรียบร้อยแล้ว!\n(หมายเหตุ: แผนกนี้ยังไม่ได้ตั้งค่า LINE User ID ในหน้า Admin)");
+        return;
+    }
 
-            const payload = {
-                to: targetUserId,
-                caseData: caseData,
-                fixUrl: fixUrl,
-                customMessage: customMessage
-            };
+    // สร้าง Copy ของ caseData และลบ Base64 ออก ป้องกัน Payload ใหญ่เกินไป
+    const cleanCaseData = { ...caseData };
+    if (cleanCaseData.img1 && cleanCaseData.img1.startsWith('data:image')) cleanCaseData.img1 = '';
+    if (cleanCaseData.img2 && cleanCaseData.img2.startsWith('data:image')) cleanCaseData.img2 = '';
+    if (cleanCaseData.fixImg1 && cleanCaseData.fixImg1.startsWith('data:image')) cleanCaseData.fixImg1 = '';
+    if (cleanCaseData.fixImg2 && cleanCaseData.fixImg2.startsWith('data:image')) cleanCaseData.fixImg2 = '';
 
-            fetch(GAS_WEB_APP_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            })
-            .then(() => {
-                if (customMessage) {
-                    alert(`ส่ง LINE แจ้งเตือนตีกลับพร้อมเหตุผล ไปยังผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-                } else {
-                    alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
-                }
-            })
-            .catch(err => alert("เกิดข้อผิดพลาดในการยิง LINE: " + err.message));
+    const payload = {
+        to: targetUserId.trim(),
+        caseData: JSON.stringify(cleanCaseData),
+        fixUrl: fixUrl,
+        customMessage: customMessage || ""
+    };
+
+    fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+    })
+    .then(() => {
+        if (customMessage) {
+            alert(`ส่ง LINE แจ้งเตือนตีกลับพร้อมเหตุผล ไปยังผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
+        } else {
+            alert(`บันทึกข้อมูลเรียบร้อยแล้ว!\nส่ง LINE Flex Message แจ้งผู้รับผิดชอบ (${caseData.pic}) สำเร็จครับ`);
         }
+    })
+    .catch(err => alert("เกิดข้อผิดพลาดในการยิง LINE: " + err.message));
+}
 
         function submitPatrolForm(e) {
             e.preventDefault();
